@@ -181,13 +181,20 @@ app.post('/delete-product', async (req, res) => {
             return res.status(400).json({ message: "Barcode is required" });
         }
 
-        // Find and update the product by barcode
-        const result = await Product.findOneAndUpdate(
-            { barcode: String(barcode)+"_deleted" },
-            { linked: false },
-            { new: true }
-        );
+        // Find the product by its original barcode
+        const product = await Product.findOne({ barcode });
 
+        // If no product is found, send a 404 response
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        // Update the product's linked status and modify the barcode
+        product.linked = false;
+        product.barcode = `${barcode}_deleted`;
+
+        // Save the updated product
+        await product.save();
         // If no product is found, send a 404 response
         if (!result) {
             return res.status(404).json({ message: "Product not found" });
