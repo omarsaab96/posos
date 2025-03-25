@@ -195,10 +195,6 @@ app.post('/delete-product', async (req, res) => {
 
         // Save the updated product
         await product.save();
-        // If no product is found, send a 404 response
-        if (!result) {
-            return res.status(404).json({ message: "Product not found" });
-        }
 
         res.status(200).json({ message: "Product unlinked successfully", product: result });
     } catch (error) {
