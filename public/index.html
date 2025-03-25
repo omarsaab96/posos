@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>POSOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Slab:ital,wght@0,100..700;1,100..700&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header>
+    <a href="javascript:;" class="logo"><i class="fa-solid fa-barcode"></i><span>POS</span>OS</a>
+  </header>
+  <div class="container">
+    <div class="sectionScanner">
+      <div class="scannerContainer" id="scannerContainer">
+        <div id="reader"></div>
+        <div id="permissionDenied">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <p>Camera access is required to scan barcodes.</p>
+          <button id="requestPermission">Grant Camera Access</button>
+        </div>
+
+        <div id="openScanner">
+          <i class="fa-solid fa-thumbs-up"></i>
+          <p>Camera access granted successfully.</p>
+          <button id="requestPermission" onclick="startScanner()">Start Scanning</button>
+        </div>
+
+        <div>
+          <!-- <button id="scannerSettings" onclick="scannerSettings()"><i class="fa-solid fa-gear"></i></button> -->
+          <button id="stopScanner" onclick="stopScanner()">Stop</button>
+        </div>
+      </div>
+
+      <form id="barcodeForm">
+        <input type="text" id="barcode" placeholder="Enter Barcode" name="barcode" required autocomplete="off" />
+        <button type="submit"><i class="fa-solid fa-arrow-right"></i></button>
+      </form>
+
+      <div id="productInfo" style="display:none;">
+        <div class="headTitle">
+          <div>
+            <h2>Cart #</h2>
+            <input type="text" id="cartName" disabled>
+            <i id="editCartName" class="fa-solid fa-pencil"></i>
+            <i id="cancelEditCartName" class="fa-solid fa-xmark"></i>
+            <i id="confirmEditCartName" class="fa-solid fa-check"></i>
+          </div>
+          <div class="actions">
+            <span id="clearCart" class="">Clear</span>
+            <span id="confirmCart" class="">Save</span>
+          </div>
+        </div>
+        <div id="scannedProducts">
+
+        </div>
+
+      </div>
+
+      <div id="addNewProduct" style="display:none;">
+        <h2>Add New Product</h2>
+        <form id="addNewProductForm" enctype="multipart/form-data">
+          <input type="text" placeholder="barcode" id="newProductBarcode" name="newProductBarcode" required disabled />
+          <input type="text" placeholder="name" id="newProductName" name="newProductName" required />
+          <div class="row">
+            <div class="price">
+              <input type="number" placeholder="price" id="newProductPrice" name="newProductPrice" required />
+              <!-- <input type="text" placeholder="currency" id="newProductCurrency" name="newProductCurrency" value="USD"
+                required disabled /> -->
+              <select name="newProductCurrency" id="newProductCurrency">
+                <option value="USD" selected>USD</option>
+                <option value="LBP">LBP</option>
+              </select>
+            </div>
+            <div class="productQuantity">
+              <span class="newless"><i class="fa-solid fa-minus"></i></span>
+              <input type="number" id="newProductQuantity" name="newProductQuantity" value="1" min="1" max="100"
+                step="1" required>
+              <span class="newmore"><i class="fa-solid fa-plus"></i></span>
+            </div>
+          </div>
+          <input type="text" placeholder="variation" id="newProductVariation" name="newProductVariation" />
+          <input type="text" placeholder="category" id="newProductType" name="newProductType" />
+          <input type="text" placeholder="soldQuantity" id="newProductSoldQuantity" name="newProductSoldQuantity"
+            value="0" required disabled />
+          <input type="text" placeholder="image url" id="newProductLastRestock" name="newProductLastRestock"
+            value="today" required disabled />
+          <input type="file" placeholder="image url" id="newProductImage" name="newProductImage" />
+
+          <div class="actions">
+            <button type="reset">Cancel</button>
+            <button type="submit">Add product</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <div class="subsection sectionInventory">
+      <div class="sectionTitle">
+        <h2>Inventory</h2>
+
+        <div class="sectionTitleActions">
+
+          <span class="refresh">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </span>
+          <span class="sort">
+            <i class="fa-solid fa-arrow-up-short-wide"></i>
+          </span>
+          <!-- <span class="filter">
+            <i class="fa-solid fa-filter"></i>
+          </span> -->
+          <span class="search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </span>
+
+          <div class="listView">
+            <span class="active" data-view="grid"><i class="fa-solid fa-border-all"></i></span>
+            <span data-view="list"><i class="fa-solid fa-list-ul"></i></span>
+          </div>
+        </div>
+
+        <div class="searchEntity" id="inventorySearchEntity">
+          <div class="content">
+            <a class="back" href="javascript:closeSearch('inventorySearchEntity');"><i class="fa-solid fa-arrow-left"></i></a>
+            <input type="text" name="" id="inventorySearchField" class="searchField" placeholder="Product name, category, quantity or price">
+            <div class="searchloader"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="categories">
+        <ul>
+          
+        </ul>
+      </div>
+
+      <div id="InventoryProducts">
+      </div>
+
+      <div id="productDetails">
+
+      </div>
+
+      <div id="editProductForm" style="display:none;">
+        <div class="sectionTitle">
+          <h2 class="editBack"><i class="fa-solid fa-arrow-left"></i> Edit product</h2>
+        </div>
+        <form id="editProductFormForm" enctype="multipart/form-data">
+          <input type="hidden" id="editProductId" name="editProductId" />
+          <input type="text" placeholder="Barcode" id="editProductBarcode" name="editProductBarcode" required disabled />
+          <input type="text" placeholder="Name" id="editProductName" name="editProductName" required />
+          <div class="row">
+            <div class="price">
+              <input type="number" placeholder="Price" id="editProductPrice" name="editProductPrice" required />
+                <select name="editProductCurrency" id="editProductCurrency">
+                  <option value="USD">USD</option>
+                  <option value="LBP">LBP</option>
+                </select>
+            </div>
+
+            <div class="productQuantity">
+              <span class="editless"><i class="fa-solid fa-minus"></i></span>
+              <input type="number" placeholder="Quantity" id="editProductQuantity" name="editProductQuantity" required />
+              <span class="editmore"><i class="fa-solid fa-plus"></i></span>
+            </div>
+          </div>
+          <input type="text" placeholder="Variation" id="editProductVariation" name="editProductVariation" />
+          <input type="text" placeholder="Type" id="editProductType" name="editProductType" />
+          <!-- <input type="text" placeholder="soldQuantity" id="editProductSoldQuantity" name="editProductSoldQuantity" value="0" required="" disabled=""> -->
+          <!-- <input type="text" placeholder="image url" id="editProductLastRestock" name="editProductLastRestock" value="today" required="" disabled=""> -->
+          <input type="file" id="editProductImage" name="editProductImage" />
+
+          <div class="actions">
+            <button type="reset">Cancel</button>
+            <button type="submit">Save Changes</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+    <div class="subsection sectionOrders">
+      <div class="sectionTitle">
+        <h2>Orders</h2>
+
+        <div class="sectionTitleActions">
+          <span class="refresh">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </span>
+          <span class="sort">
+            <i class="fa-solid fa-arrow-up-short-wide"></i>
+          </span>
+          <!-- <span class="filter">
+            <i class="fa-solid fa-filter"></i>
+          </span> -->
+          <span class="search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </span>
+        </div>
+
+        <div class="searchEntity" id="ordersSearchEntity">
+          <div class="content">
+            <a class="back" href="javascript:closeSearch('ordersSearchEntity');"><i class="fa-solid fa-arrow-left"></i></a>
+            <input type="text" name="" id="orderSearchField" class="searchField" placeholder="Order name, date or total">
+            <div class="searchloader"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="Orders" class="list">
+      </div>
+
+      <div id="orderDetails">
+
+      </div>
+
+    </div>
+
+    <div class="subsection sectionNotifications">
+      <div class="sectionTitle"><h2>Notifications</h2></div>
+
+      <p>
+      </p>
+    </div>
+
+    <div class="subsection sectionProfile">
+      <div class="sectionTitle"><h2>Profile</h2></div>
+
+    </div>
+
+    <div class="bottomNav">
+      <ul>
+        <li data-tag="inventory"><a href="javascript:;"><i class="fa-solid fa-boxes-stacked"></i></a></li>
+        <li data-tag="orders"><a href="javascript:;"><i class="fa-solid fa-receipt"></i></a></li>
+        <li data-tag="scanner" class="active"><a href="javascript:;"><i class="fa-solid fa-barcode"></i></a></li>
+        <li data-tag="notifications"><a href="javascript:;"><i class="fa-solid fa-bell"></i></a></li>
+        <li data-tag="profile"><a href="javascript:;"><i class="fa-solid fa-id-badge"></i></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="popup" id="sortPopup">
+    <div class="content">
+      <div class="title">
+        Sort By
+      </div>
+
+      <ul class="sortingOptions">
+        <li class="selected">Name</li>
+        <li>Price</li>
+        <li class="hideOnOrders">Quantity</li>
+        <li>Date added</li>
+      </ul>
+
+      <ul class="sortingMethod horiz">
+        <li class="selected"><i class="fa-solid fa-arrow-up"></i> Ascending</li>
+        <li><i class="fa-solid fa-arrow-down"></i> Descending</li>
+      </ul>
+
+      <div class="actions">
+        <button type="reset" class="resetbtn">Clear</button>
+        <button type="submit" class="applybtn">Apply</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="loader">
+    <span class="spinner"></span>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="plugins.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
