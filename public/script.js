@@ -1,3 +1,6 @@
+// API_URL =  "http://localhost:5000"
+API_URL =  "https://posos.onrender.com"
+
 var singleMode = true;
 var lastScannedCode = null;
 var lastScannedTime = 0;
@@ -117,7 +120,7 @@ checkCameraPermissions();
 
 async function checkScannedBarcode(barcode) {
   try {
-    const response = await fetch(process.env.API_URL+"/find-product", {
+    const response = await fetch(API_URL+"/find-product", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -242,7 +245,7 @@ async function submitNewProduct(event) {
   }
 
   try {
-    const response = await fetch(process.env.API_URL+"/add-product", {
+    const response = await fetch(API_URL+"/add-product", {
       method: "POST",
       body: formData // No need for Content-Type header; FormData sets it automatically
     });
@@ -423,7 +426,7 @@ function cancelDeleteProduct(barcode) {
 function confirmDeleteProduct(barcode) {
 
   $.ajax({
-    url: '/delete-product',
+    url: API_URL+'/delete-product',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ barcode: barcode }),
@@ -460,7 +463,7 @@ function cancelDeleteProductDetails(barcode) {
 function confirmDeleteProductDetails(barcode) {
   $('#loader').fadeIn();
   $.ajax({
-    url: '/delete-product',
+    url: API_URL+'/delete-product',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ barcode: barcode }),
@@ -509,7 +512,7 @@ function cancelDeleteOrderDetails(oid) {
 
 function confirmDeleteOrder(oid) {
   $.ajax({
-    url: '/delete-order',
+    url: API_URL+'/delete-order',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ oid: oid }),
@@ -536,7 +539,7 @@ function confirmDeleteOrder(oid) {
 function confirmDeleteOrderDetails(oid) {
   $('#loader').fadeIn();
   $.ajax({
-    url: '/delete-order',
+    url: API_URL+'/delete-order',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ oid: oid }),
@@ -630,7 +633,7 @@ function showProductDetails(barcode) {
   closeSearch('inventorySearchEntity')
 
   $.ajax({
-    url: '/find-product',
+    url: API_URL+'/find-product',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ barcode: barcode }),
@@ -699,7 +702,7 @@ function showProductDetails(barcode) {
 function showOrderDetails(oid) {
   closeSearch('ordersSearchEntity')
   $.ajax({
-    url: '/find-order',
+    url: API_URL+'/find-order',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ oid: oid }),
@@ -882,7 +885,7 @@ function showProfile() {
 
 async function getProducts() {
   try {
-    const response = await fetch('/get-products', {
+    const response = await fetch(API_URL+'/get-products', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -935,7 +938,7 @@ function renderInventoryTypes(types) {
 
 async function getOrders() {
   try {
-    const response = await fetch('/get-orders', {
+    const response = await fetch(API_URL+'/get-orders', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -968,7 +971,7 @@ async function getOrders() {
 
 async function getOrdersCount() {
   try {
-    const response = await fetch('/get-orders', {
+    const response = await fetch(API_URL+'/get-orders', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -1042,7 +1045,7 @@ function confirmEditProduct() {
     formData.append("image", fileInput.files[0]);
   }
 
-  fetch(process.env.API_URL+"/edit-product", {
+  fetch(API_URL+"/edit-product", {
     method: "PUT",
     body: formData
   })
@@ -1282,7 +1285,7 @@ $(document).ready(function () {
     };
 
     $.ajax({
-      url: '/add-order',  // API endpoint
+      url: API_URL+'/add-order',  // API endpoint
       type: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(orderData),
