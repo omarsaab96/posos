@@ -117,7 +117,7 @@ checkCameraPermissions();
 
 async function checkScannedBarcode(barcode) {
   try {
-    const response = await fetch("http://localhost:5000/find-product", {
+    const response = await fetch(process.env.API_URL+"/find-product", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -242,7 +242,7 @@ async function submitNewProduct(event) {
   }
 
   try {
-    const response = await fetch("http://localhost:5000/add-product", {
+    const response = await fetch(process.env.API_URL+"/add-product", {
       method: "POST",
       body: formData // No need for Content-Type header; FormData sets it automatically
     });
@@ -1042,7 +1042,7 @@ function confirmEditProduct() {
     formData.append("image", fileInput.files[0]);
   }
 
-  fetch("http://localhost:5000/edit-product", {
+  fetch(process.env.API_URL+"/edit-product", {
     method: "PUT",
     body: formData
   })
