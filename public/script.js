@@ -814,7 +814,9 @@ function closeOrderDetails() {
   $('#orderDetails').html('');
   $('#Orders').show();
   closeSearch('ordersSearchEntity')
-  $('.sectionOrders >.sectionTitle .sectionTitleActions').css('display','flex');
+  $('.sectionOrders >.sectionTitle .sectionTitleActions').css('display', 'flex');
+  $('.sectionOrders >.sectionTitle .sectionTitleActions .sort').removeClass('on');
+
   $('.sectionOrders >.sectionTitle').removeClass('open');
   $('.sectionOrders .sectionTitle h2').removeClass('ordersback').html('Orders');
 }
@@ -823,9 +825,10 @@ function closeProductDetails() {
   $('#productDetails').hide();
   $('#productDetails').html('');
   $('#InventoryProducts').show();
-  
+
   closeSearch('inventorySearchEntity')
-  $('.sectionInventory >.sectionTitle .sectionTitleActions').css('display','flex');
+  $('.sectionInventory >.sectionTitle .sectionTitleActions').css('display', 'flex');
+  $('.sectionInventory >.sectionTitle .sectionTitleActions .sort').removeClass('on');
 
   $('.sectionInventory >.sectionTitle').removeClass('open');
   $('.sectionInventory >.sectionTitle h2').removeClass('inventoryBack').html('Inventory');
@@ -1458,7 +1461,7 @@ function applySort(selectedSortOption, selectedSortMethod) {
     let sortOrder = selectedSortMethod.trim().toLowerCase() === 'ascending' ? 1 : -1;
 
     if (selectedSortOption == "Name") { selectedSortOption = selectedSortOption.toLowerCase() }
-    if (selectedSortOption == "Price") { selectedSortOption = "total" }
+    if (selectedSortOption == "Price") { selectedSortOption = selectedSortOption.toLowerCase() }
     if (selectedSortOption == "Quantity") { selectedSortOption = "quantity" }
     if (selectedSortOption == "Date added") { selectedSortOption = "date" }
 
