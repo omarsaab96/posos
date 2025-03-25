@@ -191,7 +191,7 @@ app.post('/delete-product', async (req, res) => {
 
         // Update the product's linked status and modify the barcode
         product.linked = false;
-        product.barcode = `${barcode}_deleted`;
+        product.barcode = `${barcode}_deleted_${Date.now()}`;
 
         // Save the updated product
         await product.save();
