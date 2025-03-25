@@ -196,7 +196,7 @@ app.post('/delete-product', async (req, res) => {
         // Save the updated product
         await product.save();
 
-        res.status(200).json({ message: "Product unlinked successfully", product: result });
+        res.status(200).json({ message: "Product unlinked successfully", product });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
