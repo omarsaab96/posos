@@ -1,5 +1,5 @@
 // API_URL =  "http://localhost:5000"
-API_URL =  "https://posos.onrender.com"
+API_URL = "https://posos.onrender.com"
 
 var singleMode = true;
 var lastScannedCode = null;
@@ -31,6 +31,7 @@ const qrCodeSuccessCallback = (decodedText, decodedResult) => {
 
   lastScannedCode = decodedText;
   lastScannedTime = currentTime;
+  $('#loader').fadeIn();
   checkScannedBarcode(decodedText);
 
   if (singleMode) {
@@ -119,8 +120,9 @@ checkCameraPermissions();
 
 
 async function checkScannedBarcode(barcode) {
+
   try {
-    const response = await fetch(API_URL+"/find-product", {
+    const response = await fetch(API_URL + "/find-product", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -129,6 +131,7 @@ async function checkScannedBarcode(barcode) {
     });
 
     if (!response.ok) {
+      $('#loader').fadeOut();
       errorSound.play().catch(error => console.error("Error playing beep:", error));
       AskToAddProduct(barcode);
     } else {
@@ -152,31 +155,31 @@ async function checkScannedBarcode(barcode) {
         el.classList.add('product');
         el.setAttribute('data-pid', barcode);
         var ProductToAdd = `
-        <div class="left">
-          <img id="productImage" src="/uploads/${product.image || 'default.jpg'}" alt="">
-        </div>
-        <div class="right">
-          <div class="info">
-            <p class="prodname"><span id="productName">${product.name}</span></p>
-            <p><span id="productCurrency">${product.currency}</span> <span id="productPrice">${product.totalPrice}</span></p>
-            <!-- <p><strong>Barcode:</strong> <span id="productBarcode"></span></p> -->
+          <div class="left">
+            <img id="productImage" src="/uploads/${product.image || 'default.jpg'}" alt="">
           </div>
-
-          <div class="actions">
-            <span class="remove"><i class="fa-solid fa-trash-can"></i></span>
-            <div>
-              <span class="remove confirmRemove"><i class="fa-solid fa-check"></i></span>
-              <span class="remove cancelRemove"><i class="fa-solid fa-xmark"></i></span>
+          <div class="right">
+            <div class="info">
+              <p class="prodname"><span id="productName">${product.name}</span></p>
+              <p><span id="productCurrency">${product.currency}</span> <span id="productPrice">${product.totalPrice}</span></p>
+              <!-- <p><strong>Barcode:</strong> <span id="productBarcode"></span></p> -->
             </div>
-            <div class="productQuantity">
-              <span class="less"><i class="fa-solid fa-minus"></i></span>
-              <input type="number" name="prodQty" id="" value="1" min="1" max="100" step="1">
-              <span class="more"><i class="fa-solid fa-plus"></i></span>
+  
+            <div class="actions">
+              <span class="remove"><i class="fa-solid fa-trash-can"></i></span>
+              <div>
+                <span class="remove confirmRemove"><i class="fa-solid fa-check"></i></span>
+                <span class="remove cancelRemove"><i class="fa-solid fa-xmark"></i></span>
+              </div>
+              <div class="productQuantity">
+                <span class="less"><i class="fa-solid fa-minus"></i></span>
+                <input type="number" name="prodQty" id="" value="1" min="1" max="100" step="1">
+                <span class="more"><i class="fa-solid fa-plus"></i></span>
+              </div>
             </div>
+  
           </div>
-
-        </div>
-      `;
+        `;
         el.innerHTML = ProductToAdd;
         document.getElementById("scannedProducts").prepend(el);
 
@@ -185,6 +188,7 @@ async function checkScannedBarcode(barcode) {
       }
 
       typeText(barcode)
+      $('#loader').fadeOut();
       beepSound.play().catch(error => console.error("Error playing beep:", error));
 
       // Hide error and show product info
@@ -196,14 +200,14 @@ async function checkScannedBarcode(barcode) {
       document.getElementById("barcodeForm").style.display = "block";
       document.getElementById("barcodeForm").classList.add('moveup');
     }
-
-
   } catch (error) {
     document.getElementById("productInfo").style.display = "none";
     document.getElementById("addNewProduct").style.display = "none";
     document.getElementById("barcodeForm").style.display = "block";
 
   }
+
+
 }
 
 function AskToAddProduct(barcode) {
@@ -245,7 +249,7 @@ async function submitNewProduct(event) {
   }
 
   try {
-    const response = await fetch(API_URL+"/add-product", {
+    const response = await fetch(API_URL + "/add-product", {
       method: "POST",
       body: formData // No need for Content-Type header; FormData sets it automatically
     });
@@ -308,6 +312,7 @@ document.getElementById("addNewProductForm").addEventListener("submit", submitNe
 document.getElementById("addNewProductForm").addEventListener("reset", closeNewProduct);
 document.getElementById("barcodeForm").addEventListener("submit", function (e) {
   e.preventDefault();
+  $('#loader').fadeIn();
   checkScannedBarcode(document.getElementById("barcode").value.trim());
   document.getElementById("barcodeForm").reset();
 });
@@ -426,7 +431,7 @@ function cancelDeleteProduct(barcode) {
 function confirmDeleteProduct(barcode) {
 
   $.ajax({
-    url: API_URL+'/delete-product',
+    url: API_URL + '/delete-product',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ barcode: barcode }),
@@ -463,7 +468,7 @@ function cancelDeleteProductDetails(barcode) {
 function confirmDeleteProductDetails(barcode) {
   $('#loader').fadeIn();
   $.ajax({
-    url: API_URL+'/delete-product',
+    url: API_URL + '/delete-product',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ barcode: barcode }),
@@ -512,7 +517,7 @@ function cancelDeleteOrderDetails(oid) {
 
 function confirmDeleteOrder(oid) {
   $.ajax({
-    url: API_URL+'/delete-order',
+    url: API_URL + '/delete-order',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ oid: oid }),
@@ -539,7 +544,7 @@ function confirmDeleteOrder(oid) {
 function confirmDeleteOrderDetails(oid) {
   $('#loader').fadeIn();
   $.ajax({
-    url: API_URL+'/delete-order',
+    url: API_URL + '/delete-order',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ oid: oid }),
@@ -633,7 +638,7 @@ function showProductDetails(barcode) {
   closeSearch('inventorySearchEntity')
 
   $.ajax({
-    url: API_URL+'/find-product',
+    url: API_URL + '/find-product',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ barcode: barcode }),
@@ -702,7 +707,7 @@ function showProductDetails(barcode) {
 function showOrderDetails(oid) {
   closeSearch('ordersSearchEntity')
   $.ajax({
-    url: API_URL+'/find-order',
+    url: API_URL + '/find-order',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ oid: oid }),
@@ -882,10 +887,9 @@ function showProfile() {
   $('.sectionProfile').fadeIn();
 }
 
-
 async function getProducts() {
   try {
-    const response = await fetch(API_URL+'/get-products', {
+    const response = await fetch(API_URL + '/get-products', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -938,7 +942,7 @@ function renderInventoryTypes(types) {
 
 async function getOrders() {
   try {
-    const response = await fetch(API_URL+'/get-orders', {
+    const response = await fetch(API_URL + '/get-orders', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -971,7 +975,7 @@ async function getOrders() {
 
 async function getOrdersCount() {
   try {
-    const response = await fetch(API_URL+'/get-orders', {
+    const response = await fetch(API_URL + '/get-orders', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -1045,7 +1049,7 @@ function confirmEditProduct() {
     formData.append("image", fileInput.files[0]);
   }
 
-  fetch(API_URL+"/edit-product", {
+  fetch(API_URL + "/edit-product", {
     method: "PUT",
     body: formData
   })
@@ -1104,6 +1108,7 @@ function hidePopup() {
 
 
 $(document).ready(function () {
+
   $(document).on('click', '.categories ul li', function () {
     closeSearch('inventorySearchEntity')
 
@@ -1285,7 +1290,7 @@ $(document).ready(function () {
     };
 
     $.ajax({
-      url: API_URL+'/add-order',  // API endpoint
+      url: API_URL + '/add-order',  // API endpoint
       type: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(orderData),

@@ -183,7 +183,7 @@ app.post('/delete-product', async (req, res) => {
 
         // Find and update the product by barcode
         const result = await Product.findOneAndUpdate(
-            { barcode: String(barcode) },
+            { barcode: String(barcode)+"_deleted" },
             { linked: false },
             { new: true }
         );
