@@ -12,7 +12,7 @@ var orders = [];
 var selectedSection = '';
 var isSorted = false;
 var isFilteredByCat = false;
-var firstInventoryLoad = true;
+// var firstInventoryLoad = true;
 const beepSound = new Audio("beep.mp3"); // Load beep sound
 const errorSound = new Audio("error.mp3"); // Load beep sound
 
@@ -119,94 +119,81 @@ document.getElementById("requestPermission").addEventListener("click", () => {
 checkCameraPermissions();
 
 
-async function checkScannedBarcode(barcode) {
+function checkScannedBarcode(barcode) {
 
-  try {
-    const response = await fetch(API_URL + "/find-product", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ barcode })
-    });
+  let productIndex = inventoryProducts.findIndex(p => p.barcode == barcode);
 
-    if (!response.ok) {
-      $('#loader').fadeOut();
-      errorSound.play().catch(error => console.error("Error playing beep:", error));
-      AskToAddProduct(barcode);
-    } else {
-      const product = await response.json();
+  if (productIndex == -1) {
+    $('#loader').fadeOut();
+    errorSound.play().catch(error => console.error("Error playing beep:", error));
+    AskToAddProduct(barcode);
+  } else {
+    let product = inventoryProducts[productIndex];
+    productIndex = scannedProducts.findIndex(p => p.barcode === barcode);
 
-      const productIndex = scannedProducts.findIndex(p => p.barcode === barcode);
-
-      if (productIndex != -1) {
-        if (scannedProducts[productIndex].selectedQty == scannedProducts[productIndex].quantity) {
-          errorSound.play().catch(error => console.error("Error playing beep:", error));
-          alert("Reached maximum quantity for this product.");
-          return;
-        } else {
-          addProductQuantity(barcode);
-        }
+    if (productIndex != -1) {
+      if (scannedProducts[productIndex].selectedQty == scannedProducts[productIndex].quantity) {
+        errorSound.play().catch(error => console.error("Error playing beep:", error));
+        alert("Reached maximum quantity for this product.");
+        return;
       } else {
-        product.selectedQty = 1;
-        product.totalPrice = product.price * product.selectedQty;
-
-        var el = document.createElement('div');
-        el.classList.add('product');
-        el.setAttribute('data-pid', barcode);
-        var ProductToAdd = `
-          <div class="left">
-            <img id="productImage" src="/uploads/${product.image || 'default.jpg'}" alt="">
-          </div>
-          <div class="right">
-            <div class="info">
-              <p class="prodname"><span id="productName">${product.name}</span></p>
-              <p><span id="productCurrency">${product.currency}</span> <span id="productPrice">${product.totalPrice}</span></p>
-              <!-- <p><strong>Barcode:</strong> <span id="productBarcode"></span></p> -->
-            </div>
-  
-            <div class="actions">
-              <span class="remove"><i class="fa-solid fa-trash-can"></i></span>
-              <div>
-                <span class="remove confirmRemove"><i class="fa-solid fa-check"></i></span>
-                <span class="remove cancelRemove"><i class="fa-solid fa-xmark"></i></span>
-              </div>
-              <div class="productQuantity">
-                <span class="less"><i class="fa-solid fa-minus"></i></span>
-                <input type="number" name="prodQty" id="" value="1" min="1" max="100" step="1">
-                <span class="more"><i class="fa-solid fa-plus"></i></span>
-              </div>
-            </div>
-  
-          </div>
-        `;
-        el.innerHTML = ProductToAdd;
-        document.getElementById("scannedProducts").prepend(el);
-
-
-        scannedProducts.push(product);
+        addProductQuantity(barcode);
       }
+    } else {
+      product.selectedQty = 1;
+      product.totalPrice = product.price * product.selectedQty;
 
-      typeText(barcode)
-      $('#loader').fadeOut();
-      beepSound.play().catch(error => console.error("Error playing beep:", error));
+      var el = document.createElement('div');
+      el.classList.add('product');
+      el.setAttribute('data-pid', barcode);
+      var ProductToAdd = `
+        <div class="left">
+          <img id="productImage" src="/uploads/${product.image || 'default.jpg'}" alt="">
+        </div>
+        <div class="right">
+          <div class="info">
+            <p class="prodname"><span id="productName">${product.name}</span></p>
+            <p><span id="productCurrency">${product.currency}</span> <span id="productPrice">${product.totalPrice}</span></p>
+            <!-- <p><strong>Barcode:</strong> <span id="productBarcode"></span></p> -->
+          </div>
 
-      // Hide error and show product info
-      document.getElementById("productInfo").style.display = "block";
-      getOrdersCount();
-      $('#inputLoader').fadeIn();
-      document.getElementById("addNewProduct").style.display = "none";
-      document.getElementById("scannerContainer").classList.add('shrink');
-      document.getElementById("barcodeForm").style.display = "block";
-      document.getElementById("barcodeForm").classList.add('moveup');
+          <div class="actions">
+            <span class="remove"><i class="fa-solid fa-trash-can"></i></span>
+            <div>
+              <span class="remove confirmRemove"><i class="fa-solid fa-check"></i></span>
+              <span class="remove cancelRemove"><i class="fa-solid fa-xmark"></i></span>
+            </div>
+            <div class="productQuantity">
+              <span class="less"><i class="fa-solid fa-minus"></i></span>
+              <input type="number" name="prodQty" id="" value="1" min="1" max="100" step="1">
+              <span class="more"><i class="fa-solid fa-plus"></i></span>
+            </div>
+          </div>
+
+        </div>
+      `;
+      el.innerHTML = ProductToAdd;
+      document.getElementById("scannedProducts").prepend(el);
+
+
+      scannedProducts.push(product);
     }
-  } catch (error) {
-    document.getElementById("productInfo").style.display = "none";
+
+    typeText(barcode)
+    $('#loader').fadeOut();
+    beepSound.play().catch(error => console.error("Error playing beep:", error));
+
+    // Hide error and show product info
+    document.getElementById("productInfo").style.display = "block";
+    getOrdersCount();
+    $('#inputLoader').fadeIn();
     document.getElementById("addNewProduct").style.display = "none";
+    document.getElementById("scannerContainer").classList.add('shrink');
     document.getElementById("barcodeForm").style.display = "block";
+    document.getElementById("barcodeForm").classList.add('moveup');
 
+    getProducts();
   }
-
 
 }
 
@@ -269,6 +256,7 @@ async function submitNewProduct(event) {
     document.getElementById("addNewProduct").style.display = "none";
     document.getElementById("barcodeForm").style.display = "block";
 
+    getProducts();
   } catch (error) {
     console.error("Error:", error);
     alert("Error adding product: " + error.message);
@@ -912,15 +900,16 @@ async function getProducts() {
       renderInventory(inventoryProducts);
     }
 
-    if (firstInventoryLoad) {
-      firstInventoryLoad = false;
+    // if (firstInventoryLoad) {
+    //   firstInventoryLoad = false;
 
-      let uniqueTypes = [...new Set(inventoryProducts.map(item => item.type))];
-      renderInventoryTypes(uniqueTypes)
+    let uniqueTypes = [...new Set(inventoryProducts.map(item => item.type))];
+    renderInventoryTypes(uniqueTypes)
 
-    }
+    // }
 
     $('#loader').fadeOut();
+
 
   } catch (error) {
     $('#InventoryProducts').html(`<div class="noProducts"><i class="fa-solid fa-circle-xmark"></i><span>${error.message}</span></div>`);
@@ -1108,7 +1097,7 @@ function hidePopup() {
 
 
 $(document).ready(function () {
-
+  getProducts();
   $(document).on('click', '.categories ul li', function () {
     closeSearch('inventorySearchEntity')
 
