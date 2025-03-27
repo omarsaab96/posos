@@ -1,5 +1,6 @@
-API_URL = "http://localhost:5000"
-// API_URL = "https://posos.onrender.com"
+
+// let API_URL = "http://localhost:5000"
+let API_URL = "https://posos.onrender.com"
 
 var singleMode = true;
 // var lastScannedCode = null;
