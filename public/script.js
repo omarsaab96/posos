@@ -1,10 +1,10 @@
-// API_URL =  "http://localhost:5000"
-API_URL = "https://posos.onrender.com"
+API_URL = "http://localhost:5000"
+// API_URL = "https://posos.onrender.com"
 
 var singleMode = true;
-var lastScannedCode = null;
-var lastScannedTime = 0;
-const debounceTime = 2000; // 2 seconds debounce
+// var lastScannedCode = null;
+// var lastScannedTime = 0;
+// const debounceTime = 2000; // 2 seconds debounce
 var scannedProducts = [];
 var inventoryProducts = [];
 var filteredByCategoryInventoryProducts = [];
@@ -18,26 +18,31 @@ const errorSound = new Audio("error.mp3"); // Load beep sound
 
 // QR Code Scanner Callback
 const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-  const currentTime = Date.now();
+  // const currentTime = Date.now();
 
   // Prevent duplicate scans within the debounce period
-  if (decodedText === lastScannedCode && currentTime - lastScannedTime < debounceTime) {
-    return;
-  }
+  // if (decodedText === lastScannedCode && currentTime - lastScannedTime < debounceTime) {
+  //   return;
+  // }
 
-  if (decodedText === lastScannedCode) {
+  // if (decodedText === lastScannedCode) {
 
-  }
+  // }
 
-  lastScannedCode = decodedText;
-  lastScannedTime = currentTime;
+  // lastScannedCode = decodedText;
+  // lastScannedTime = currentTime;
+
   $('#loader').fadeIn();
+
+  // if (singleMode) {
+    // freezeFrame();
+    pauseScanner()
+    
+  // }
+
   checkScannedBarcode(decodedText);
 
-  if (singleMode) {
-    // freezeFrame();
-    // pauseScanner()
-  }
+
 };
 
 // QR Code Scanner Configuration
@@ -110,15 +115,6 @@ function stopScanner() {
   });
 }
 
-// Request Camera Permission Again
-document.getElementById("requestPermission").addEventListener("click", () => {
-  checkCameraPermissions();
-});
-
-// Run Camera Permission Check on Page Load
-checkCameraPermissions();
-
-
 function checkScannedBarcode(barcode) {
 
   let productIndex = inventoryProducts.findIndex(p => p.barcode == barcode);
@@ -177,6 +173,8 @@ function checkScannedBarcode(barcode) {
 
 
       scannedProducts.push(product);
+
+
     }
 
     typeText(barcode)
@@ -185,17 +183,75 @@ function checkScannedBarcode(barcode) {
 
     // Hide error and show product info
     document.getElementById("productInfo").style.display = "block";
-    getOrdersCount();
+    if (scannedProducts.length == 1) {
+      getOrdersCount();
+    }
     $('#inputLoader').fadeIn();
     document.getElementById("addNewProduct").style.display = "none";
     document.getElementById("scannerContainer").classList.add('shrink');
     document.getElementById("barcodeForm").style.display = "block";
     document.getElementById("barcodeForm").classList.add('moveup');
 
+
     getProducts();
+    resumeScanner();
   }
 
+  
+
 }
+
+function freezeFrame() {
+  const videoElement = document.querySelector("video"); // Get the video feed
+  const readerElement = document.getElementById("reader");
+
+  if (!videoElement) return;
+
+  // Create canvas only once
+  if (!window.canvasElement) {
+    window.canvasElement = document.createElement("canvas");
+    window.canvasElement.style.position = "absolute";
+    window.canvasElement.style.top = "0";
+    window.canvasElement.style.left = "0";
+    window.canvasElement.style.width = "100%";
+    window.canvasElement.style.height = "100%";
+    readerElement.appendChild(window.canvasElement);
+    window.canvasContext = window.canvasElement.getContext("2d");
+  }
+
+  // Set canvas size to match video
+  window.canvasElement.width = videoElement.videoWidth;
+  window.canvasElement.height = videoElement.videoHeight;
+
+  // Draw the last frame from video onto canvas
+  window.canvasContext.drawImage(videoElement, 0, 0, window.canvasElement.width, window.canvasElement.height);
+
+  // Hide video feed and show canvas instead
+  videoElement.style.display = "none";
+  window.canvasElement.style.display = "block";
+}
+
+function pauseScanner() {
+  // html5QrCode.stop()
+  //   .then(() => console.log("Scanner paused"))
+  //   .catch(err => console.error("Error stopping scanner:", err));
+  html5QrCode.pause()
+  console.log("Scanner paused")
+}
+
+function resumeScanner() {
+  html5QrCode.resume();
+  console.log("Scanner resummed")
+}
+
+
+// Request Camera Permission Again
+document.getElementById("requestPermission").addEventListener("click", () => {
+  checkCameraPermissions();
+});
+
+// Run Camera Permission Check on Page Load
+checkCameraPermissions();
 
 function AskToAddProduct(barcode) {
   if (confirm("Product not found. Do you want to add it?")) {
@@ -205,6 +261,8 @@ function AskToAddProduct(barcode) {
     document.getElementById("newProductLastRestock").value = formatDate();
     document.getElementById("scannerContainer").classList.add('shrink');
     document.getElementById("barcodeForm").style.display = "none";
+  } else {
+    resumeScanner()
   }
 }
 
@@ -255,7 +313,7 @@ async function submitNewProduct(event) {
     document.getElementById("newProductCurrency").value = "USD";
     document.getElementById("addNewProduct").style.display = "none";
     document.getElementById("barcodeForm").style.display = "block";
-
+    resumeScanner();
     getProducts();
   } catch (error) {
     console.error("Error:", error);
@@ -276,6 +334,8 @@ function closeNewProduct() {
     document.getElementById("scannerContainer").classList.add("shrink");
     document.getElementById("productInfo").style.display = "block";
   }
+
+  resumeScanner();
 }
 
 function typeText(text) {
@@ -624,6 +684,7 @@ function showSection(section) {
 
 function showProductDetails(barcode) {
   closeSearch('inventorySearchEntity')
+  $('.categories').hide();
 
   $.ajax({
     url: API_URL + '/find-product',
@@ -821,6 +882,8 @@ function closeProductDetails() {
   $('#productDetails').hide();
   $('#productDetails').html('');
   $('#InventoryProducts').show();
+  $('.categories').show();
+  $('.categories ul li').removeClass('selected');
 
   closeSearch('inventorySearchEntity')
   $('.sectionInventory >.sectionTitle .sectionTitleActions').css('display', 'flex');
@@ -984,6 +1047,7 @@ async function getOrdersCount() {
   } catch (error) {
     $("#cartName").val('null')
   }
+
 }
 
 function openEditProduct(barcode) {
