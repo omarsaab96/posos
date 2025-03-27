@@ -35,9 +35,9 @@ const qrCodeSuccessCallback = (decodedText, decodedResult) => {
   $('#loader').fadeIn();
 
   // if (singleMode) {
-    // freezeFrame();
-    pauseScanner()
-    
+  // freezeFrame();
+  pauseScanner()
+
   // }
 
   checkScannedBarcode(decodedText);
@@ -197,7 +197,7 @@ function checkScannedBarcode(barcode) {
     resumeScanner();
   }
 
-  
+
 
 }
 
@@ -1110,21 +1110,28 @@ function confirmEditProduct() {
       if (!response.ok) {
         errorSound.play().catch(error => console.error("Error playing beep:", error));
         alert("Failed to update product");
+        return Promise.reject("Failed to update product");
+      } else {
+        return response.json(); // Convert response to JSON
       }
     })
-    .then(result => {
+    .then(updatedProduct => {
       closeEditProduct();
       getProducts();
+      showProductDetails(updatedProduct.barcode)
+      $('#loader').fadeOut();
     })
     .catch(error => {
       console.error("Error:", error);
       alert("Error updating product: " + error.message);
     });
+
 }
 
 // Attach event listener to the edit form
 document.getElementById("editProductFormForm").addEventListener("submit", function (event) {
   event.preventDefault();
+  $('#loader').fadeIn();
   confirmEditProduct();
 });
 document.getElementById("editProductFormForm").addEventListener("reset", closeEditProduct);
