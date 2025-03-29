@@ -197,9 +197,8 @@ button:hover {
 .product .left img {
     display: block;
     width: 100%;
-    height: 100%;
+    height: 86px;
     object-fit: cover;
-    max-height:86px;
 }
 
 .product .right {
@@ -1269,6 +1268,13 @@ header {
             i {
                 font-size: 12px;
                 margin-right: 10px;
+                transition: all 0.3s ease-in-out;
+            }
+
+            &.open{
+                i{
+                    transform:rotateZ(90deg);
+                }
             }
         }
     }

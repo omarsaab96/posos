@@ -2,14 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require("multer");
+const axios = require("axios");
+const fs = require("fs");
 const path = require("path");
+require('dotenv').config();
 
 const Product = require('./models/Product');
 const Order = require('./models/Order');
 const Inventory = require('./models/Inventory');
-
-
-require('dotenv').config();
 
 const app = express();
 
@@ -20,21 +20,12 @@ app.use(express.static('public'));
 
 
 // Set up Multer storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "public/uploads/"); // Save images in the 'uploads' folder
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname)); // Rename file with timestamp
-    }
-});
-
-const upload = multer({ storage: storage });
-
+const upload = multer({ storage: multer.memoryStorage() });
+const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
 
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected"))
     .catch((err) => console.log(err));
 
@@ -65,19 +56,35 @@ app.get('/get-orders', async (req, res) => {
 app.post("/add-product", upload.single("image"), async (req, res) => {
     try {
         const { name, barcode, price, currency, type, quantity, variation } = req.body;
-        const image = req.file ? req.file.filename : null; // Store uploaded file name
-
-        // Basic validation
+        
         if (!name || !barcode || !price || !quantity) {
             return res.status(400).json({ message: "All fields are required: name, barcode, price, quantity" });
         }
 
+        let imageUrl = null;
+        if (req.file) {
+            const base64Image = req.file.buffer.toString("base64");
+
+            // Upload to ImgBB
+            const response = await axios.post(
+                `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+                { image: base64Image },
+                { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+            );
+
+            console.log(response);
+
+
+            imageUrl = response.data.data.url; // Get the direct image URL
+        }
+
         // Save product to database
-        const newProduct = new Product({ name, barcode, price, currency, type, quantity, image, variation });
+        const newProduct = new Product({ name, barcode, price, currency, type, quantity, image: imageUrl, variation });
         await newProduct.save();
+
         res.status(201).json(newProduct);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(500).json({ message: "Error uploading product", error: error.message });
     }
 });
 
@@ -173,7 +180,7 @@ app.post('/find-order', async (req, res) => {
     }
 });
 
-app.post('/delete-product', async (req, res) => {
+app.post('/unlink-product', async (req, res) => {unlink
     try {
         const { barcode } = req.body;
 
@@ -202,7 +209,7 @@ app.post('/delete-product', async (req, res) => {
     }
 });
 
-app.post('/delete-order', async (req, res) => {
+app.post('/unlink-order', async (req, res) => {
     try {
         const { oid } = req.body;
 
@@ -232,16 +239,29 @@ app.post('/delete-order', async (req, res) => {
 app.put('/edit-product', upload.single("image"), async (req, res) => {
     try {
         const { id, name, barcode, price, currency, type, quantity, variation } = req.body;
-        const image = req.file ? req.file.filename : undefined; // Update image if provided
 
         if (!id) {
             return res.status(400).json({ message: "Product ID is required" });
         }
 
+        let imageUrl;
+        if (req.file) {
+            const base64Image = req.file.buffer.toString("base64");
+
+            // Upload new image to ImgBB
+            const response = await axios.post(
+                `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+                { image: base64Image },
+                { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+            );
+
+            imageUrl = response.data.data.url; // Get the new image URL
+        }
+
         // Find and update the product
         const updatedProduct = await Product.findByIdAndUpdate(
             id,
-            { name, barcode, price, currency, type, quantity, variation, ...(image && { image }) },
+            { name, barcode, price, currency, type, quantity, variation, ...(imageUrl && { image: imageUrl }) },
             { new: true }
         );
 
@@ -251,12 +271,9 @@ app.put('/edit-product', upload.single("image"), async (req, res) => {
 
         res.status(200).json(updatedProduct);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: "Error updating product", error: error.message });
     }
 });
-
-
-//DELETE
 
 
 // Set server to listen on port 5000

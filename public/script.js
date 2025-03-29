@@ -1,6 +1,6 @@
 
-// let API_URL = "http://localhost:5000"
-let API_URL = "https://posos.onrender.com"
+let API_URL = "http://localhost:5000"
+// let API_URL = "https://posos.onrender.com"
 
 var singleMode = true;
 // var lastScannedCode = null;
@@ -145,7 +145,7 @@ function checkScannedBarcode(barcode) {
       el.setAttribute('data-pid', barcode);
       var ProductToAdd = `
         <div class="left">
-          <img id="productImage" src="/uploads/${product.image || 'default.jpg'}" alt="">
+          <img id="productImage" src="${product.image || '/uploads/default.jpg'}" alt="">
         </div>
         <div class="right">
           <div class="info">
@@ -480,7 +480,7 @@ function cancelDeleteProduct(barcode) {
 function confirmDeleteProduct(barcode) {
 
   $.ajax({
-    url: API_URL + '/delete-product',
+    url: API_URL + '/unlink-product',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ barcode: barcode }),
@@ -517,7 +517,7 @@ function cancelDeleteProductDetails(barcode) {
 function confirmDeleteProductDetails(barcode) {
   $('#loader').fadeIn();
   $.ajax({
-    url: API_URL + '/delete-product',
+    url: API_URL + '/unlink-product',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ barcode: barcode }),
@@ -566,7 +566,7 @@ function cancelDeleteOrderDetails(oid) {
 
 function confirmDeleteOrder(oid) {
   $.ajax({
-    url: API_URL + '/delete-order',
+    url: API_URL + '/unlink-order',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ oid: oid }),
@@ -593,7 +593,7 @@ function confirmDeleteOrder(oid) {
 function confirmDeleteOrderDetails(oid) {
   $('#loader').fadeIn();
   $.ajax({
-    url: API_URL + '/delete-order',
+    url: API_URL + '/unlink-order',
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ oid: oid }),
@@ -697,7 +697,7 @@ function showProductDetails(barcode) {
 
       var productdetails = `
         <div class="productDetailsImage">
-          <img src="/uploads/${response.image || 'default.jpg'}" alt="">
+          <img src="${response.image || '/uploads/default.jpg'}" alt="">
         </div>
         <div class="orderDetailsHead">
           <div class="orderId">
@@ -773,7 +773,7 @@ function showOrderDetails(oid) {
 
         productDiv.innerHTML = `
             <div class="left">
-                <img id="productImage" src="/uploads/${item.image || 'default.jpg'}" alt="">
+                <img id="productImage" src="${item.image || '/uploads/default.jpg'}" alt="">
             </div>
             <div class="right">
                 <div class="info">
@@ -1630,7 +1630,7 @@ function renderInventory(inventoryProducts) {
 
       productDiv.innerHTML = `
             <div class="left">
-                <img id="productImage" src="/uploads/${product.image || 'default.jpg'}" alt="">
+                <img id="productImage" src="${product.image || '/uploads/default.jpg'}" alt="">
             </div>
             <div class="right">
                 <div class="info">
