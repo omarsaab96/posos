@@ -36,9 +36,7 @@ const qrCodeSuccessCallback = (decodedText, decodedResult) => {
   $('#loader').fadeIn();
 
   // if (singleMode) {
-  // freezeFrame();
   pauseScanner()
-
   // }
 
   checkScannedBarcode(decodedText);
@@ -48,10 +46,11 @@ const qrCodeSuccessCallback = (decodedText, decodedResult) => {
 
 // QR Code Scanner Configuration
 const config = {
-  fps: 10,
+  fps: 5,
   rememberLastUsedCamera: true,
   showTorchButtonIfSupported: true,
-  aspectRatio: 0.56,
+  // aspectRatio: 0.56,
+  aspectRatio: 1.7,
   facingMode: "environment",
   formatsToSupport: [
     Html5QrcodeSupportedFormats.QR_CODE,
@@ -72,14 +71,12 @@ async function checkCameraPermissions() {
     stream.getTracks().forEach(track => track.stop()); // Stop stream after checking
     document.getElementById("permissionDenied").style.display = "none";
     document.getElementById("openScanner").style.display = "block";
-    document.getElementById("stopScanner").style.display = "none";
     // document.getElementById("scannerSettings").style.display="none";
     // startScanner(); // If permission is granted, start the scanner
   } catch (error) {
     console.warn("Camera permission denied:", error);
     document.getElementById("openScanner").style.display = "none";
     document.getElementById("permissionDenied").style.display = "block";
-    document.getElementById("stopScanner").style.display = "none";
     // document.getElementById("scannerSettings").style.display="none";
   }
 }
@@ -116,7 +113,7 @@ function stopScanner() {
   });
 }
 
-function checkScannedBarcode(barcode) {
+function checkScannedBarcode(barcode, withTypeBarcodeEffect = true) {
 
   let productIndex = inventoryProducts.findIndex(p => p.barcode == barcode);
 
@@ -132,6 +129,7 @@ function checkScannedBarcode(barcode) {
       if (scannedProducts[productIndex].selectedQty == scannedProducts[productIndex].quantity) {
         errorSound.play().catch(error => console.error("Error playing beep:", error));
         alert("Reached maximum quantity for this product.");
+        resumeScanner();
         return;
       } else {
         addProductQuantity(barcode);
@@ -171,14 +169,15 @@ function checkScannedBarcode(barcode) {
       `;
       el.innerHTML = ProductToAdd;
       document.getElementById("scannedProducts").prepend(el);
-
-
       scannedProducts.push(product);
-
-
     }
 
-    typeText(barcode)
+    if (withTypeBarcodeEffect) {
+      typeText(barcode)
+    } else {
+      document.getElementById("barcodeForm").reset();
+    }
+
     $('#loader').fadeOut();
     beepSound.play().catch(error => console.error("Error playing beep:", error));
 
@@ -236,13 +235,17 @@ function pauseScanner() {
   // html5QrCode.stop()
   //   .then(() => console.log("Scanner paused"))
   //   .catch(err => console.error("Error stopping scanner:", err));
-  html5QrCode.pause()
-  console.log("Scanner paused")
+  if (html5QrCode.getState() === Html5QrcodeScannerState.SCANNING) {
+    html5QrCode.pause()
+    console.log("Scanner paused")
+  }
 }
 
 function resumeScanner() {
-  html5QrCode.resume();
-  console.log("Scanner resummed")
+  if (html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+    html5QrCode.resume();
+    console.log("Scanner resummed")
+  }
 }
 
 
@@ -256,6 +259,7 @@ checkCameraPermissions();
 
 function AskToAddProduct(barcode) {
   if (confirm("Product not found. Do you want to add it?")) {
+    pauseScanner();
     document.getElementById("productInfo").style.display = "none";
     document.getElementById("addNewProduct").style.display = "block";
     document.getElementById("newProductBarcode").value = barcode;
@@ -318,7 +322,6 @@ async function submitNewProduct(event) {
     getProducts();
   } catch (error) {
     console.error("Error:", error);
-    alert("Error adding product: " + error.message);
   }
 }
 
@@ -362,7 +365,7 @@ document.getElementById("addNewProductForm").addEventListener("reset", closeNewP
 document.getElementById("barcodeForm").addEventListener("submit", function (e) {
   e.preventDefault();
   $('#loader').fadeIn();
-  checkScannedBarcode(document.getElementById("barcode").value.trim());
+  checkScannedBarcode(document.getElementById("barcode").value.trim(), false);
   document.getElementById("barcodeForm").reset();
 });
 
@@ -752,6 +755,8 @@ function showProductDetails(barcode) {
       alert('Error fetching order details');
     }
   });
+
+  $('#loader').fadeOut();
 }
 
 function showOrderDetails(oid) {
@@ -916,6 +921,7 @@ function showInventory() {
   $('body').addClass('graybody');
   $('.sectionInventory').fadeIn();
   $('#loader').fadeIn();
+  closeEditProduct();
   closeProductDetails();
   getProducts();
 }
@@ -1264,6 +1270,7 @@ $(document).ready(function () {
   });
 
   $(document).on('click', '#InventoryProducts .details', function () {
+    $('#loader').fadeIn();
     barcode = $(this).closest('.product').attr('data-pid');
     showProductDetails(barcode)
   });

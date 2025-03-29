@@ -301,11 +301,12 @@ button:hover {
   display: none;
 }
 
+#editProductForm #editProductImage,
 #addNewProduct #newProductImage {
   padding: 5px;
 }
 
-#editProductForm ::file-selector-button,
+#editProductForm #editProductImage::file-selector-button,
 #addNewProduct #newProductImage::file-selector-button {
   border-radius: 50px;
   padding: 5px 10px;
@@ -677,13 +678,14 @@ header {
   position: absolute;
   top: 15px;
   right: 10px;
-  padding: 5px;
+  padding: 7px 10px;
   width: auto;
-  font-size: 12px;
+  font-size: 13px;
   /* box-shadow: 0 0 5px 1px rgb(90 88 88 / 40%); */
   z-index: 2;
   background-color: #f42f2f;
   /* color: #828282; */
+  display: none;
 }
 
 #scannerSettings {
