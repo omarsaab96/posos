@@ -180,7 +180,7 @@ app.post('/find-order', async (req, res) => {
     }
 });
 
-app.post('/unlink-product', async (req, res) => {unlink
+app.post('/unlink-product', async (req, res) => {
     try {
         const { barcode } = req.body;
 
