@@ -88,7 +88,7 @@ button:hover {
 #productInfo h2 {
     color: #828282;
     margin-bottom: 10px;
-    font-family: "Josefin Slab", serif;
+    font-family: "poppins", serif;
     padding: 0 10px;
 }
 
@@ -447,14 +447,14 @@ button:hover {
 #reader {
     border: none !important;
     margin-bottom: 20px;
-    pointer-events: none;
+    // pointer-events: none;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    height:100%;
+    height: 100%;
 
-    video{
+    video {
         height: 100%;
         width: 100%;
         object-fit: cover;
@@ -712,7 +712,7 @@ header {
     z-index: 2;
     background-color: #f42f2f;
     /* color: #828282; */
-    display:none;
+    display: none;
 }
 
 #scannerSettings {
@@ -838,7 +838,7 @@ header {
         transition: all 0.3s ease-in-out;
         opacity: 0;
         visibility: hidden;
-        display:none;
+        display: none;
 
         .content {
             position: relative;
@@ -892,15 +892,16 @@ header {
     }
 
     &.open {
+
         h2,
-        .sectionTitleActions{
-            display:none!important;
+        .sectionTitleActions {
+            display: none !important;
         }
 
         .searchEntity {
             visibility: visible;
             opacity: 1;
-            display:block;
+            display: block;
         }
     }
 }
@@ -1274,9 +1275,9 @@ header {
                 transition: all 0.3s ease-in-out;
             }
 
-            &.open{
-                i{
-                    transform:rotateZ(90deg);
+            &.open {
+                i {
+                    transform: rotateZ(90deg);
                 }
             }
         }
@@ -1531,6 +1532,120 @@ header {
                 // background-color: #222222;
                 // border-color: #28a745;
             }
+        }
+    }
+}
+
+#cameraSelect {
+    position: absolute;
+    bottom: 60px;
+    right: 5px;
+    // transform: translateX(-50%);
+    background-color: #111111;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    list-style-type: none;
+    padding: 5px 5px 5px 10px;
+    font-size: 14px;
+    color: #828282;
+    display: none;
+
+    span {
+        margin-right: 10px;
+        white-space: nowrap;
+    }
+
+    li {
+        padding: 5px;
+        border-radius: 50%;
+        background-color: #111111;
+        width: 25px;
+        height: 25px;
+        text-align: center;
+        line-height: 16px;
+        margin-right: 5px;
+
+        &:last-child {
+            margin: 0;
+        }
+
+        &.selected {
+            background-color: #222222;
+            color: #28a745;
+        }
+    }
+}
+
+.alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(34, 34, 34, 0.7);
+    z-index: 10;
+    opacity:0;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+    overflow:hidden;
+
+    &.show{
+        opacity:1;
+        visibility: visible;
+    }
+
+    .content {
+        position: absolute;
+        bottom: -100%;
+        left: 5px;
+        right: 5px;
+        background-color: #111111;
+        border-radius: 30px;
+        padding:15px 5px 5px;
+        color: #828282;
+        text-align: center;
+        transition: all 0.3s ease-in-out;
+        opacity:0;
+        visibility: hidden;
+
+        i {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            margin-bottom: 30px;
+        }
+
+        .actions{
+            display:flex;
+            gap:5px;
+
+            a {
+                width: 100%;
+                padding: 15px;
+                background-color: #28a745;
+                color: white;
+                border: none;
+                border-radius: 30px;
+                cursor: pointer;
+                font-size: 16px;
+                display:block;
+    
+                &.secondary{
+                    background-color: #222222;
+                }
+            }
+        }
+
+        
+
+        &.slideup{
+            transition-delay:0.1s;
+            bottom: 5px;
+            opacity:1;
+            visibility: visible;
         }
     }
 }

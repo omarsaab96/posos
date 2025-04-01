@@ -2,10 +2,10 @@
 // let API_URL = "http://localhost:5000"
 let API_URL = "https://posos.onrender.com"
 
-var singleMode = true;
-// var lastScannedCode = null;
-// var lastScannedTime = 0;
-// const debounceTime = 2000; // 2 seconds debounce
+// var singleMode = true;
+var lastScannedCode = null;
+var lastScannedTime = 0;
+const debounceTime = 2000; // 2 seconds debounce
 var scannedProducts = [];
 var inventoryProducts = [];
 var filteredByCategoryInventoryProducts = [];
@@ -13,32 +13,28 @@ var orders = [];
 var selectedSection = '';
 var isSorted = false;
 var isFilteredByCat = false;
+var firstCamLoad = true;
+let scannedProductsQuantityTimeout;
+let editProductsQuantityTimeout;
 // var firstInventoryLoad = true;
 const beepSound = new Audio("beep.mp3"); // Load beep sound
 const errorSound = new Audio("error.mp3"); // Load beep sound
 
 // QR Code Scanner Callback
 const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-  // const currentTime = Date.now();
+  const currentTime = Date.now();
 
   // Prevent duplicate scans within the debounce period
-  // if (decodedText === lastScannedCode && currentTime - lastScannedTime < debounceTime) {
-  //   return;
-  // }
+  if (decodedText === lastScannedCode && currentTime - lastScannedTime < debounceTime) {
+    return;
+  }
 
-  // if (decodedText === lastScannedCode) {
-
-  // }
-
-  // lastScannedCode = decodedText;
-  // lastScannedTime = currentTime;
+  lastScannedCode = decodedText;
+  lastScannedTime = currentTime;
 
   $('#loader').fadeIn();
 
-  // if (singleMode) {
   pauseScanner()
-  // }
-
   checkScannedBarcode(decodedText);
 
 
@@ -50,17 +46,26 @@ const config = {
   rememberLastUsedCamera: true,
   showTorchButtonIfSupported: true,
   // aspectRatio: 0.56,
-  aspectRatio: 1.7,
+  // aspectRatio: 1.7,
   facingMode: "environment",
   formatsToSupport: [
     Html5QrcodeSupportedFormats.QR_CODE,
+    Html5QrcodeSupportedFormats.AZTEC,
+    Html5QrcodeSupportedFormats.CODABAR,
+    Html5QrcodeSupportedFormats.CODE_39,
+    Html5QrcodeSupportedFormats.CODE_93,
     Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.DATA_MATRIX,
+    Html5QrcodeSupportedFormats.MAXICODE,
+    Html5QrcodeSupportedFormats.ITF,
     Html5QrcodeSupportedFormats.EAN_13,
     Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.PDF_417,
+    Html5QrcodeSupportedFormats.RSS_14,
+    Html5QrcodeSupportedFormats.RSS_EXPANDED,
     Html5QrcodeSupportedFormats.UPC_A,
     Html5QrcodeSupportedFormats.UPC_E,
-    Html5QrcodeSupportedFormats.CODE_39,
-    Html5QrcodeSupportedFormats.CODE_93
+    Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
   ]
 };
 
@@ -82,16 +87,21 @@ async function checkCameraPermissions() {
 }
 
 const html5QrCode = new Html5Qrcode("reader");
-// Start QR Code Scanner
-function startScanner() {
+let selectedCameraId = null;
+let videoTrack = null;
+
+function startScanner(selectedCameraId = null) {
   document.getElementById("openScanner").style.display = "none";
   document.getElementById("loader").style.display = "block";
   document.getElementById("stopScanner").style.display = "block";
   // document.getElementById("scannerSettings").style.display="block";
   document.getElementById("permissionDenied").style.display = "none"; // Hide permission UI
 
+
+  const cameraConfig = selectedCameraId ? { deviceId: { exact: selectedCameraId } } : { facingMode: "environment" };
+
   html5QrCode.start(
-    { facingMode: "environment" },
+    cameraConfig,
     config,
     qrCodeSuccessCallback
   ).then(() => {
@@ -103,10 +113,22 @@ function startScanner() {
   });
 }
 
+// function focusCamera() {
+//   if (videoTrack) {
+//       const capabilities = videoTrack.getCapabilities();
+//       if (capabilities.focusMode) {
+//           videoTrack.applyConstraints({ advanced: [{ focusMode: "continuous" }] })
+//               .then(() => console.log("Focus adjusted"))
+//               .catch(err => console.error("Error adjusting focus:", err));
+//       }
+//   }
+// }
+
 function stopScanner() {
   html5QrCode.stop().then(() => {
     document.getElementById("openScanner").style.display = "block";
     document.getElementById("stopScanner").style.display = "none";
+    document.getElementById("cameraSelect").style.display = "none";
     // document.getElementById("scannerSettings").style.display="none";
   }).catch((err) => {
     console.error("Failed to stop QR Code scanner:", err);
@@ -117,19 +139,22 @@ function checkScannedBarcode(barcode, withTypeBarcodeEffect = true) {
 
   let productIndex = inventoryProducts.findIndex(p => p.barcode == barcode);
 
+  //if product is not found
   if (productIndex == -1) {
     $('#loader').fadeOut();
     errorSound.play().catch(error => console.error("Error playing beep:", error));
+    pauseScanner();
     AskToAddProduct(barcode);
   } else {
     let product = inventoryProducts[productIndex];
     productIndex = scannedProducts.findIndex(p => p.barcode === barcode);
 
+    //if product is already in scannedProducts list => add its quantity
     if (productIndex != -1) {
       if (scannedProducts[productIndex].selectedQty == scannedProducts[productIndex].quantity) {
-        errorSound.play().catch(error => console.error("Error playing beep:", error));
-        alert("Reached maximum quantity for this product.");
+        makeAlert("Reached maximum quantity for this product.");
         resumeScanner();
+        $('#loader').fadeOut();
         return;
       } else {
         addProductQuantity(barcode);
@@ -248,6 +273,50 @@ function resumeScanner() {
   }
 }
 
+function loadCameras() {
+  if (firstCamLoad) {
+    firstCamLoad = false;
+    Html5Qrcode.getCameras().then((cameras) => {
+      if (cameras.length > 0) {
+        const cameraSelect = document.getElementById("cameraSelect");
+        cameraSelect.innerHTML = "";
+        const spanElement = document.createElement("span");
+        spanElement.innerHTML = '<i class="fa-solid fa-camera"></i>';
+        cameraSelect.appendChild(spanElement);
+
+        cameras.forEach(async (camera, index) => {
+          const option = document.createElement("li");
+          option.setAttribute("data-camid", camera.id);
+          option.textContent = index + 1;
+          cameraSelect.appendChild(option);
+        });
+
+        const backCameras = cameras.filter(camera =>
+          /back|rear|environment/i.test(camera.label)
+        );
+        if (backCameras.length > 0) {
+          const bestBackCamera = backCameras[backCameras.length - 1];
+          selectedCameraId = bestBackCamera.id
+        } else {
+          selectedCameraId = cameras[0].id;
+        }
+
+        startScanner(selectedCameraId);
+
+        $('#cameraSelect li[data-camid="' + selectedCameraId + '"]').addClass('selected');
+        if (cameras.length > 1) {
+          document.getElementById("cameraSelect").style.display = "flex";
+        }
+      }
+    }).catch(err => console.error("Error getting cameras:", err));
+  } else {
+    startScanner(selectedCameraId)
+    document.getElementById("cameraSelect").style.display = "flex";
+
+  }
+
+}
+
 
 // Request Camera Permission Again
 document.getElementById("requestPermission").addEventListener("click", () => {
@@ -257,9 +326,10 @@ document.getElementById("requestPermission").addEventListener("click", () => {
 // Run Camera Permission Check on Page Load
 checkCameraPermissions();
 
-function AskToAddProduct(barcode) {
-  if (confirm("Product not found. Do you want to add it?")) {
-    pauseScanner();
+async function AskToAddProduct(barcode) {
+  const userConfirmed = await makeAlert("Product not found. Do you want to add it?", "confirm");
+
+  if (userConfirmed) {
     document.getElementById("productInfo").style.display = "none";
     document.getElementById("addNewProduct").style.display = "block";
     document.getElementById("newProductBarcode").value = barcode;
@@ -305,13 +375,10 @@ async function submitNewProduct(event) {
     });
 
     if (!response.ok) {
-      errorSound.play().catch(error => console.error("Error playing beep:", error));
-      alert("Failed to add product");
+      makeAlert("Failed to add product");
     }
 
     const result = await response.json();
-    // alert("Product added successfully!");
-
     // Reset form after submission
     document.getElementById("addNewProductForm").reset();
     document.getElementById("newProductBarcode").value = formData.get("barcode");
@@ -374,8 +441,7 @@ function addProductQuantity(barcode) {
 
   if (productIndex != -1) {
     if (scannedProducts[productIndex].selectedQty == scannedProducts[productIndex].quantity) {
-      errorSound.play().catch(error => console.error("Error playing beep:", error));
-      alert("Reached maximum quantity for this product.");
+      makeAlert("Reached maximum quantity for this product.");
     } else {
       scannedProducts[productIndex].selectedQty += 1;
       scannedProducts[productIndex].totalPrice = scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty;
@@ -399,8 +465,7 @@ function subtractProductQuantity(barcode) {
 
   if (productIndex != -1) {
     if (scannedProducts[productIndex].selectedQty == 1) {
-      errorSound.play().catch(error => console.error("Error playing beep:", error));
-      alert("Reached minimum quantity for this product.");
+      makeAlert("Reached minimum quantity for this product.");
     } else {
       scannedProducts[productIndex].selectedQty -= 1;
       scannedProducts[productIndex].totalPrice = scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty;
@@ -427,12 +492,21 @@ function addNewProductQuantity() {
 function subtractNewProductQuantity() {
   let nowVal = parseInt($('#newProductQuantity').val())
   if (nowVal == 1) {
-    errorSound.play().catch(error => console.error("Error playing beep:", error));
-    alert("Reached minimum quantity.");
+    makeAlert("Reached minimum quantity.");
   } else {
     $('#newProductQuantity').val(nowVal - 1);
   }
 
+}
+
+function addEditProductQuantity() {
+  $('#editProductFormForm .productQuantity input').val(parseInt($('#editProductFormForm .productQuantity input').val()) + 1);
+}
+
+function subtractEditProductQuantity() {
+  if (parseInt($('#editProductFormForm .productQuantity input').val()) > 0) {
+    $('#editProductFormForm .productQuantity input').val(parseInt($('#editProductFormForm .productQuantity input').val()) - 1);
+  }
 }
 
 function removeProduct(barcode) {
@@ -688,7 +762,6 @@ function showSection(section) {
 
 function showProductDetails(barcode) {
   closeSearch('inventorySearchEntity')
-  $('.categories').hide();
 
   $.ajax({
     url: API_URL + '/find-product',
@@ -749,10 +822,11 @@ function showProductDetails(barcode) {
       $('#InventoryProducts').hide();
       $('.sectionInventory > .sectionTitle .sectionTitleActions').hide();
       $('.sectionInventory >.sectionTitle h2').addClass('inventoryBack').html('<i class="fa-solid fa-arrow-left"></i> Inventory');
+      $('.categories').hide();
     },
     error: function (error) {
       console.error('Error fetching order details:', error);
-      alert('Error fetching order details');
+      makeAlert('Error fetching order details');
     }
   });
 
@@ -857,7 +931,7 @@ function showOrderDetails(oid) {
     },
     error: function (error) {
       console.error('Error fetching order details:', error);
-      alert('Error fetching order details');
+      makeAlert('Error fetching order details');
     }
   });
 }
@@ -934,6 +1008,9 @@ function showOrders() {
 }
 function showScanner() {
   $('body').removeClass('graybody');
+  $('#loader').fadeIn();
+  getProducts();
+  $('#loader').fadeOut();
   $('.sectionScanner').fadeIn();
 }
 function showNotifications() {
@@ -955,8 +1032,7 @@ async function getProducts() {
     });
 
     if (!response.ok) {
-      errorSound.play().catch(error => console.error("Error playing beep:", error));
-      alert(`Error: ${response.status} ${response.statusText}`);
+      makeAlert(`Error: ${response.status} ${response.statusText}`);
     }
 
     inventoryProducts = await response.json();
@@ -977,6 +1053,17 @@ async function getProducts() {
     renderInventoryTypes(uniqueTypes)
 
     // }
+
+    //check if scannedproducts is not empty, go through the scanned products, and update their quantities from the inventoryproducts array
+    if (scannedProducts.length > 0) {
+      scannedProducts.forEach(scanned => {
+        let inventoryItem = inventoryProducts.find(item => item.id === scanned.id);
+        if (inventoryItem) {
+          scanned.quantity = inventoryItem.quantity; // Update scanned product quantity
+        }
+      });
+    }
+
 
     $('#loader').fadeOut();
 
@@ -1009,8 +1096,7 @@ async function getOrders() {
     });
 
     if (!response.ok) {
-      errorSound.play().catch(error => console.error("Error playing beep:", error));
-      alert(`Error: ${response.status} ${response.statusText}`);
+      makeAlert(`Error: ${response.status} ${response.statusText}`);
     }
 
     orders = await response.json();
@@ -1042,8 +1128,7 @@ async function getOrdersCount() {
     });
 
     if (!response.ok) {
-      errorSound.play().catch(error => console.error("Error playing beep:", error));
-      alert(`Error: ${response.status} ${response.statusText}`);
+      makeAlert(`Error: ${response.status} ${response.statusText}`);
     }
 
     orders = await response.json();
@@ -1115,8 +1200,7 @@ function confirmEditProduct() {
   })
     .then(response => {
       if (!response.ok) {
-        errorSound.play().catch(error => console.error("Error playing beep:", error));
-        alert("Failed to update product");
+        makeAlert("Failed to update product");
         return Promise.reject("Failed to update product");
       } else {
         return response.json(); // Convert response to JSON
@@ -1130,7 +1214,7 @@ function confirmEditProduct() {
     })
     .catch(error => {
       console.error("Error:", error);
-      alert("Error updating product: " + error.message);
+      makeAlert("Error updating product: " + error.message);
     });
 
 }
@@ -1175,7 +1259,9 @@ function hidePopup() {
 
 
 $(document).ready(function () {
+  $('#loader').fadeIn();
   getProducts();
+  $('#loader').fadeOut();
   $(document).on('click', '.categories ul li', function () {
     closeSearch('inventorySearchEntity')
 
@@ -1221,6 +1307,14 @@ $(document).ready(function () {
 
   $(document).on('click', '.newless', function () {
     subtractNewProductQuantity(barcode)
+  });
+
+  $(document).on('click', '.editmore', function () {
+    addEditProductQuantity()
+  });
+
+  $(document).on('click', '.editless', function () {
+    subtractEditProductQuantity(barcode)
   });
 
   $(document).on('click', '.remove', function () {
@@ -1345,8 +1439,9 @@ $(document).ready(function () {
   });
 
   $(document).on('click', '#confirmCart', function () {
+    $('#loader').fadeIn();
     if (scannedProducts.length === 0) {
-      alert("Your cart is empty!");
+      makeAlert("Your cart is empty!");
       return;
     }
 
@@ -1373,10 +1468,11 @@ $(document).ready(function () {
       },
       error: function (xhr, status, error) {
         console.error("Error creating order:", error);
-        alert("Failed to place the order. Please try again.");
+        makeAlert("Failed to place the order.");
       }
     });
 
+    $('#loader').fadeOut();
 
   });
 
@@ -1492,6 +1588,86 @@ $(document).ready(function () {
     let selectedSortMethod = $('.sortingMethod .selected').text();
 
     applySort(selectedSortOption, selectedSortMethod)
+  });
+
+  $(document).on('click', '#cameraSelect li', function () {
+    if (!$(this).hasClass('selected')) {
+
+      $('#cameraSelect li').removeClass('selected')
+      $(this).addClass('selected')
+      selectedCameraId = $(this).data('camid')
+
+      console.log(selectedCameraId)
+
+      html5QrCode.stop().then(() => {
+        startScanner(selectedCameraId);
+      }).catch(err => console.error("Error switching camera:", err));
+
+    }
+
+  });
+
+  $(document).on('input', '#scannedProducts .product .productQuantity input', function () {
+    clearTimeout(scannedProductsQuantityTimeout);
+
+    scannedProductsQuantityTimeout = setTimeout(() => {
+      let qty = $(this).val();
+      let barcode = $(this).closest('.product').data('pid')
+
+      const productIndex = scannedProducts.findIndex(p => p.barcode == barcode);
+
+      if (productIndex != -1) {
+
+        if (qty > scannedProducts[productIndex].quantity) {
+          makeAlert("Reached maximum quantity for this product.");
+          $(this).val(scannedProducts[productIndex].selectedQty)
+        } else if (qty <= 0) {
+          makeAlert("Reached minimum quantity for this product.");
+          $(this).val(scannedProducts[productIndex].selectedQty)
+        }
+        else {
+          scannedProducts[productIndex].selectedQty = qty;
+          scannedProducts[productIndex].totalPrice = scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty;
+
+          $(this).val(scannedProducts[productIndex].selectedQty);
+          $(this).closest('.product').find('.right .info #productPrice').text(scannedProducts[productIndex].totalPrice);
+
+          $(this).addClass('highlight')
+          $(this).closest('.product').find('.right .info #productPrice').addClass('highlight')
+
+          setTimeout(() => {
+            $('.highlight').removeClass('highlight')
+          }, 500)
+        }
+      }
+
+    }, 300);
+  });
+
+  $(document).on('input', '#editProductFormForm .productQuantity input', function () {
+    clearTimeout(editProductsQuantityTimeout);
+
+    editProductsQuantityTimeout = setTimeout(() => {
+      let qty = $(this).val();
+
+      let barcode = $('#editProductBarcode').val();
+
+      const productIndex = inventoryProducts.findIndex(p => p.barcode == barcode);
+
+      if (productIndex != -1) {
+
+        if (qty < 0) {
+          makeAlert("Quantity can't be negative.");
+          $(this).val(inventoryProducts[productIndex].quantity)
+        }
+
+      }
+
+    }, 300);
+  });
+
+  $(document).on('click', '.alert .dismissAlert', function () {
+    dismissAlert();
   });
 });
 
@@ -1769,4 +1945,42 @@ function closeSearch(section) {
   }
 
   $(document).off('mouseup');
+}
+
+function makeAlert(msg, type = null) {
+  return new Promise((resolve, reject) => {
+    errorSound.play().catch(error => console.error("Error playing beep:", error));
+
+    if (type === "confirm") {
+
+      $('.alert .actions').prepend('<a class="acceptAlert">Yes</a>');
+      $('.alert .actions .dismissAlert').addClass('secondary').text("No");
+      $('.alert p').text(msg);
+      $('.alert').addClass('show');
+      $('.alert .content').addClass('slideup');
+
+      $(document).one('click', '.acceptAlert', function () {
+        dismissAlert();
+        resolve(true);
+      });
+
+      $(document).one('click', '.dismissAlert', function () {
+        dismissAlert();
+        resolve(false);
+      });
+
+    } else {
+      $('.alert p').text(msg);
+      $('.alert').addClass('show');
+      $('.alert .content').addClass('slideup');
+      resolve();
+    }
+  });
+}
+
+function dismissAlert() {
+  $('.alert .content').removeClass('slideup');
+  $('.alert').removeClass('show');
+  $('.alert .actions .acceptAlert').remove();
+  $('.alert .actions .dismissAlert').removeClass('secondary').text("OK");
 }

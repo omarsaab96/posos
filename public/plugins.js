@@ -18810,7 +18810,7 @@ var __Html5QrcodeLibrary__;
                         (e.innerText = m.scannerPaused()),
                             (e.style.display = "none"),
                             (e.style.position = "absolute"),
-                            (e.style.bottom = "65px"),
+                            (e.style.bottom = "0"),
                             (e.style.zIndex = "1"),
                             (e.style.background = "rgba(9, 9, 9, 0.46)"),
                             (e.style.color = "#FFECEC"),

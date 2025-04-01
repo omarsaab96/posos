@@ -34,16 +34,23 @@
         </div>
 
         <div id="openScanner">
-          <i class="fa-solid fa-thumbs-up"></i>
-          <p>Camera access granted successfully.</p>
-          <button id="requestPermission" onclick="startScanner()">Start Scanning</button>
+          <i class="fa-solid fa-barcode"></i>
+          <!-- <i class="fa-solid fa-thumbs-up"></i> -->
+          <p>Barcode scanner ready</p>
+          <!-- <p>Camera access granted successfully.</p> -->
+          <button id="requestPermission" onclick="loadCameras()">Start Scanning</button>
         </div>
 
         <div>
           <!-- <button id="scannerSettings" onclick="scannerSettings()"><i class="fa-solid fa-gear"></i></button> -->
           <button id="stopScanner" onclick="stopScanner()">Stop scan</button>
         </div>
+
+        <ul id="cameraSelect">
+        </ul>
       </div>
+
+      
 
       <form id="barcodeForm">
         <input type="text" id="barcode" placeholder="Enter Barcode" name="barcode" required autocomplete="off" />
@@ -175,7 +182,7 @@
 
             <div class="productQuantity">
               <span class="editless"><i class="fa-solid fa-minus"></i></span>
-              <input type="number" placeholder="Quantity" id="editProductQuantity" name="editProductQuantity" required />
+              <input type="number" placeholder="Quantity" id="editProductQuantity" name="editProductQuantity" min="0" required />
               <span class="editmore"><i class="fa-solid fa-plus"></i></span>
             </div>
           </div>
@@ -235,11 +242,7 @@
       <div class="sectionTitle"><h2>Notifications</h2></div>
 
       <p>
-        -multiple scans issue. add debounce
-        -on quantity alert remove loader.
-        -on add product resume scanner
-        -on update quantity in product edit, update scanner quantity also
-        -delete product error
+        
       </p>
     </div>
 
@@ -280,6 +283,16 @@
       <div class="actions">
         <button type="reset" class="resetbtn">Clear</button>
         <button type="submit" class="applybtn">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert">
+    <div class="content">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <p>error</p>
+      <div class="actions">
+        <a class="dismissAlert">OK</a>
       </div>
     </div>
   </div>
