@@ -90,6 +90,8 @@ const html5QrCode = new Html5Qrcode("reader");
 let selectedCameraId = null;
 let videoTrack = null;
 
+
+
 function startScanner(selectedCameraId = null) {
   document.getElementById("openScanner").style.display = "none";
   document.getElementById("loader").style.display = "block";
@@ -136,7 +138,6 @@ function stopScanner() {
 }
 
 function checkScannedBarcode(barcode, withTypeBarcodeEffect = true) {
-
   let productIndex = inventoryProducts.findIndex(p => p.barcode == barcode);
 
   //if product is not found
@@ -147,11 +148,11 @@ function checkScannedBarcode(barcode, withTypeBarcodeEffect = true) {
     AskToAddProduct(barcode);
   } else {
     let product = inventoryProducts[productIndex];
-    productIndex = scannedProducts.findIndex(p => p.barcode === barcode);
+    scannedproductIndex = scannedProducts.findIndex(p => p.barcode === product.barcode);
 
     //if product is already in scannedProducts list => add its quantity
-    if (productIndex != -1) {
-      if (scannedProducts[productIndex].selectedQty == scannedProducts[productIndex].quantity) {
+    if (scannedproductIndex != -1) {
+      if (scannedProducts[scannedproductIndex].selectedQty == scannedProducts[scannedproductIndex].quantity) {
         makeAlert("Reached maximum quantity for this product.");
         resumeScanner();
         $('#loader').fadeOut();
@@ -161,7 +162,7 @@ function checkScannedBarcode(barcode, withTypeBarcodeEffect = true) {
       }
     } else {
       product.selectedQty = 1;
-      product.totalPrice = product.price * product.selectedQty;
+      product.totalPrice = Number((product.price * product.selectedQty).toFixed(2));
 
       var el = document.createElement('div');
       el.classList.add('product');
@@ -221,9 +222,6 @@ function checkScannedBarcode(barcode, withTypeBarcodeEffect = true) {
     getProducts();
     resumeScanner();
   }
-
-
-
 }
 
 function freezeFrame() {
@@ -387,6 +385,7 @@ async function submitNewProduct(event) {
     document.getElementById("barcodeForm").style.display = "block";
     resumeScanner();
     getProducts();
+
   } catch (error) {
     console.error("Error:", error);
   }
@@ -444,7 +443,7 @@ function addProductQuantity(barcode) {
       makeAlert("Reached maximum quantity for this product.");
     } else {
       scannedProducts[productIndex].selectedQty += 1;
-      scannedProducts[productIndex].totalPrice = scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty;
+      scannedProducts[productIndex].totalPrice = Number((scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty).toFixed(2));
 
       let domEl = $(".product[data-pid='" + barcode + "']");
       domEl.find('.productQuantity input').val(scannedProducts[productIndex].selectedQty);
@@ -468,7 +467,7 @@ function subtractProductQuantity(barcode) {
       makeAlert("Reached minimum quantity for this product.");
     } else {
       scannedProducts[productIndex].selectedQty -= 1;
-      scannedProducts[productIndex].totalPrice = scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty;
+      scannedProducts[productIndex].totalPrice = Number((scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty).toFixed(2));
 
       let domEl = $(".product[data-pid='" + barcode + "']");
       domEl.find('.productQuantity input').val(scannedProducts[productIndex].selectedQty);
@@ -1057,7 +1056,9 @@ async function getProducts() {
     //check if scannedproducts is not empty, go through the scanned products, and update their quantities from the inventoryproducts array
     if (scannedProducts.length > 0) {
       scannedProducts.forEach(scanned => {
-        let inventoryItem = inventoryProducts.find(item => item.id === scanned.id);
+        let inventoryItem = inventoryProducts.find(item => item.barcode === scanned.barcode);
+
+
         if (inventoryItem) {
           scanned.quantity = inventoryItem.quantity; // Update scanned product quantity
         }
@@ -1597,7 +1598,7 @@ $(document).ready(function () {
       $(this).addClass('selected')
       selectedCameraId = $(this).data('camid')
 
-      console.log(selectedCameraId)
+      // console.log(selectedCameraId)
 
       html5QrCode.stop().then(() => {
         startScanner(selectedCameraId);
@@ -1627,7 +1628,7 @@ $(document).ready(function () {
         }
         else {
           scannedProducts[productIndex].selectedQty = qty;
-          scannedProducts[productIndex].totalPrice = scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty;
+          scannedProducts[productIndex].totalPrice = Number((scannedProducts[productIndex].price * scannedProducts[productIndex].selectedQty).toFixed(2));
 
           $(this).val(scannedProducts[productIndex].selectedQty);
           $(this).closest('.product').find('.right .info #productPrice').text(scannedProducts[productIndex].totalPrice);
