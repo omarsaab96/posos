@@ -1047,7 +1047,7 @@ function showProfile() {
   loadProfile();
 }
 
-function loadProfile(){
+function loadProfile() {
   $('#loader').fadeIn();
   let profile = JSON.parse(localStorage.getItem('user'))
   profile = profile.userInfo;
@@ -1057,12 +1057,20 @@ function loadProfile(){
   let profilePhone = profile.phone || null;
   let profileRole = profile.role;
 
+  $('.userInfo .info').html('');
+  $('.userMoreInfo').html('');
+  $('.adminActions').html('');
+
   $('.userInfo .info').append(`<h2 class="userName">${profileName}</h2>`);
   $('.userMoreInfo').append(`<div class="userEmail">${profileEmail}</div>`);
   $('.userMoreInfo').append(`<div class="userPhone">${profilePhone}</div>`);
 
-  if(profileRole=="admin"){
+  if (profileRole == "admin") {
     $('.userInfo .info').append(`<div class="badge">Admin</div>`);
+    $('.adminActions').append('<button class="secondary" id="clearInventory">Clear Inventory</button>')
+    $('.adminActions').append('<button class="secondary" id="clearOrders">Clear Orders</button>')
+  } else {
+    $('.adminActions').hide();
   }
 
   $('#loader').fadeOut();
@@ -1071,16 +1079,16 @@ function loadProfile(){
 function showLogin() {
   $('#accountContainer').fadeIn();
 
-  $('.logintabs li a').click(function(){
+  $('.logintabs li a').click(function () {
     $('.logintabs li').removeClass('active');
     $(this).parent().addClass('active');
 
-    if($(this).text() == "Email"){
+    if ($(this).text() == "Email") {
       $('#loginPhoneNumber').attr('hidden', true);
       $('#loginEmail').removeAttr('hidden');
     }
-    
-    if($(this).text() == "Phone"){
+
+    if ($(this).text() == "Phone") {
       $('#loginPhoneNumber').removeAttr('hidden');
       $('#loginEmail').attr('hidden', true);
     }
@@ -1333,6 +1341,10 @@ $(document).ready(function () {
       $('#loader').fadeIn()
       login();
     });
+    $(document).on('submit', '#registerForm', function () {
+      $('#loader').fadeIn()
+      register();
+    });
 
     $(document).on('click', '.alert .dismissAlert', function () {
       dismissAlert();
@@ -1341,6 +1353,14 @@ $(document).ready(function () {
     return;
   } else {
     showSection('scanner');
+    $(document).on('submit', '#loginForm', function () {
+      $('#loader').fadeIn()
+      login();
+    });
+
+    $(document).on('click', '.alert .dismissAlert', function () {
+      dismissAlert();
+    });
     eventsHandling()
   }
 
@@ -1727,6 +1747,14 @@ function eventsHandling() {
   $(document).on('click', '#logoutBtn', function () {
     $('#loader').fadeIn();
     logout(JSON.parse(localStorage.getItem('user')).userInfo.id);
+  });
+
+  $(document).on('click', '#clearInventory', function () {
+    deleteAllProducts();
+  });
+
+  $(document).on('click', '#clearOrders', function () {
+    deleteAllOrders();
   });
 
 
@@ -2117,12 +2145,12 @@ function dismissCloseCart() {
 function login() {
   const email = document.getElementById("loginEmail").value.trim();
   const phoneNumber = document.getElementById("loginPhoneNumber").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const password = document.getElementById("loginpassword").value.trim();
 
   if ((email == '' && phoneNumber == '') || password == '') {
     makeAlert("Credentials required");
     return;
-  } else if(email!=''){
+  } else if (email != '') {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
       makeAlert("Invalid email.");
@@ -2157,7 +2185,7 @@ function login() {
     .catch(error => {
       console.error('Error:', error);
       $('#loader').fadeOut();
-      makeAlert(error.message); 
+      makeAlert(error.message);
     });
 
 }
@@ -2182,7 +2210,7 @@ function logout(id) {
     })
     .catch(error => {
       console.error('Error:', error);
-      $('#loader').fadeIn();
+      $('#loader').fadeOut();
       makeAlert('Logout failed. Please try again.');
     });
 }
@@ -2203,8 +2231,7 @@ function register() {
   if ((email == '' && phoneNumber == '') || password == '') {
     makeAlert("Credentials required");
     return;
-  } else {
-    //validate email format
+  } else if (email != ''){
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
       makeAlert("Invalid email.");
@@ -2225,29 +2252,94 @@ function register() {
     },
     body: JSON.stringify(registerData)
   })
-    .then(response => {
+    .then(async response => {
       if (!response.ok) {
-        throw new Error('Registration failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
       }
       return response.json();
     })
     .then(data => {
-      localStorage.setItem('user', data);
-      $('#loader').fadeIn();
-      showSection('profile')
+      localStorage.setItem('user', JSON.stringify(data));
+      $('#loader').fadeOut();
+      location.reload();
     })
     .catch(error => {
       console.error('Error:', error);
-      makeAlert('Registration failed. Please check your credentials.');
+      $('#loader').fadeOut();
+      makeAlert(error.message);
     });
 }
 
-function deleteAllProducts() {
-  fetch(API_URL + '/delete-all-products', {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${yourToken}`
-    }
-  });
+async function deleteAllProducts() {
+  const userConfirmed = await makeAlert("Are you sure you want to clear the inventory? This action cannot be undone", "confirm");
+
+  if (userConfirmed) {
+    $('#loader').fadeIn();
+
+    fetch(API_URL + '/delete-all-products', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${JSON.parse(localStorage.getItem('user')).token}`
+      }
+    }).then(async response => {
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to clear inventory');
+      }
+      return response.json();
+    }).then(data => {
+      console.log("Inventory cleared successfully:", data);
+      getProducts();
+      $('#loader').fadeOut();
+    }).catch(error => {
+      console.error('Error:', error);
+      $('#loader').fadeOut();
+      makeAlert(error.message);
+    });
+
+  }
+
+}
+
+async function deleteAllOrders() {
+  const userConfirmed = await makeAlert("Are you sure you want to delete all orders? This action cannot be undone", "confirm");
+
+  if (userConfirmed) {
+    $('#loader').fadeIn();
+
+    fetch(API_URL + '/delete-all-orders', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${JSON.parse(localStorage.getItem('user')).token}`
+      }
+    }).then(async response => {
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete orders');
+      }
+      return response.json();
+    }).then(data => {
+      console.log("Orders deleted successfully", data);
+      getOrders();
+      $('#loader').fadeOut();
+    }).catch(error => {
+      console.error('Error:', error);
+      $('#loader').fadeOut();
+      makeAlert(error.message);
+    });
+
+  }
+
+}
+
+function switchToRegister(){
+  $('.loginSection').hide();
+  $('.registerSection').show();
+}
+function switchToLogin(){
+  $('.loginSection').show();
+  $('.registerSection').hide();
 }

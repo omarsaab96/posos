@@ -264,7 +264,7 @@ app.post('/register', async (req, res) => {
     }
 
     try {
-        const newUser = new User({ name: randomName, password: hashedPassword, phoneNumber, email, role, lastLogin: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB') });
+        const newUser = new User({ name: randomName, password: hashedPassword, phoneNumber, email, role, isLoggedIn: true, lastLogin: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB') });
         await newUser.save();
 
         //get created user id
@@ -349,7 +349,6 @@ app.post('/login', async (req, res) => {
     });
 });
 
-
 app.post('/logout', async (req, res) => {
     const { userId } = req.body;
     let user;
@@ -375,7 +374,6 @@ app.post('/logout', async (req, res) => {
 
     res.status(200).json({ message: 'Logged out successfully.' });
 });
-
 
 //PUT
 app.put('/edit-product', upload.single("image"), async (req, res) => {

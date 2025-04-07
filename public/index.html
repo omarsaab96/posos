@@ -275,6 +275,10 @@
 
       </div>
 
+      <div class="adminActions">
+
+      </div>
+
       <button id="logoutBtn" class="secondary">Logout</button>
 
     </div>
@@ -304,7 +308,7 @@
         <form id="loginForm" method="POST" action="javascript:;">
           <input type="email" name="email" id="loginEmail" placeholder="Email" autocomplete="new-email">
           <input type="text" name="phoneNumber" id="loginPhoneNumber" placeholder="Phone number" autocomplete="new-phone" hidden="true">
-          <input type="password" name="password" id="password" placeholder="Password" required autocomplete="new-password">
+          <input type="password" name="password" id="loginpassword" placeholder="Password" required autocomplete="new-password">
 
           <div class="passreset">
             <a href="javascript:;" id="forgotPassword">Forgot password?</a>
@@ -318,7 +322,28 @@
 
       </div>
       <div class="registerLink">
-        Don't have an account? <a href="javascript:;" id="createAccount">Register here</a>
+        Don't have an account? <a href="javascript:switchToRegister();" id="createAccount">Register here</a>
+      </div>
+    </div>
+    
+    <div class="registerSection">
+      <div class="loginForm">
+        <h2>Register</h2>
+
+        <form id="registerForm" method="POST" action="javascript:;">
+          <input type="email" name="email" id="registerEmail" placeholder="Email" autocomplete="new-email">
+          <input type="text" name="phoneNumber" id="registerPhoneNumber" placeholder="Phone number" autocomplete="new-phone">
+          <input type="password" name="password" id="registerPassword" placeholder="Password" required autocomplete="new-password">
+
+          <div class="loginactions">
+            <button type="submit">Create account</button>
+          </div>
+        </form>
+
+
+      </div>
+      <div class="registerLink">
+        Already have an account? <a href="javascript:switchToLogin();" id="createAccount">Login here</a>
       </div>
     </div>
   </div>

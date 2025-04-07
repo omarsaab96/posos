@@ -108,7 +108,6 @@ button.secondary {
   padding-right: 10px;
   text-align: right;
   font-size: 12px;
-  margin-bottom: 20px;
 }
 .passreset a {
   color: #828282;
@@ -157,6 +156,7 @@ button.secondary {
 
 .loginactions {
   text-align: center;
+  margin-top: 30px;
 }
 .loginactions button {
   padding: 10px 20px;
@@ -853,7 +853,9 @@ header {
   padding: 70px 10px 0;
 }
 
-.sectionScanner, #accountContainer, .bottomNav {
+.sectionScanner,
+#accountContainer,
+.bottomNav {
   display: none;
 }
 
@@ -1683,12 +1685,31 @@ header {
   font-size: 14px;
 }
 
+.adminActions {
+  margin-bottom: 30px;
+  padding: 5px;
+  background-color: #111111;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.adminActions button {
+  background-color: #222222;
+  padding: 10px;
+  font-size: 14px;
+}
+
 .userMoreInfo {
   padding: 10px;
   background-color: #111111;
   border-radius: 20px;
   color: #828282;
   margin-bottom: 30px;
+}
+
+.registerSection {
+  display: none;
 }
 
 /*# sourceMappingURL=style.css.map */
