@@ -336,6 +336,7 @@ app.post('/login', async (req, res) => {
         token,
         userInfo: {
             id: user._id,
+            name: user.name,
             email: user.email,
             phone: user.phoneNumber,
             role: user.role,
