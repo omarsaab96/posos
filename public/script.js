@@ -1297,6 +1297,7 @@ $(document).ready(function () {
     $(document).on('click', '.alert .dismissAlert', function () {
       dismissAlert();
     });
+    $('#loader').fadeOut();
     return;
   } else {
     showSection('scanner');

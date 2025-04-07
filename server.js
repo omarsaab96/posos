@@ -269,7 +269,7 @@ app.post('/register', async (req, res) => {
         //get created user id
         const createdId = newUser._id.toString();
 
-        let user  = await User.findOne({ _id: String(createdId) });
+        let user = await User.findOne({ _id: String(createdId) });
 
         const token = jwt.sign({ id: createdId }, process.env.JWT_SECRET);
 
@@ -294,21 +294,21 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { email, phoneNumber, password } = req.body;
-    let user;
 
-    if ((!email && !phoneNumber) || !password) {
+    if ((email == null && phoneNumber == null) || !password) {
         return res.status(400).json({ message: 'Please enter credentials.' });
     }
 
-    if (email) {
-        user = await User.findOne({ email: String(email) });
-    } else if (phoneNumber) {
-        user = await User.findOne({ phoneNumber: String(phoneNumber) });
+    if (email != null) {
+        const user = await User.findOne({ email: String(email) });
+    } else if (phoneNumber != null) {
+        const user = await User.findOne({ phoneNumber: String(phoneNumber) });
     } else {
+        const user = null;
         return res.status(400).json({ message: 'Please enter email or phone number.' });
     }
 
-    if (!user) {
+    if (user==null) {
         return res.status(400).json({ message: 'User not found' });
     } else {
         if (user.isLoggedIn) {
