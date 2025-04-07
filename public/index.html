@@ -23,7 +23,8 @@
   <header>
     <a href="javascript:;" class="logo"><i class="fa-solid fa-barcode"></i><span>POS</span>OS</a>
   </header>
-  <div class="container">
+
+  <div class="container" id="appContainer">
     <div class="sectionScanner">
       <div class="scannerContainer" id="scannerContainer">
         <div id="reader"></div>
@@ -50,7 +51,7 @@
         </ul>
       </div>
 
-      
+
 
       <form id="barcodeForm">
         <input type="text" id="barcode" placeholder="Enter Barcode" name="barcode" required autocomplete="off" />
@@ -84,7 +85,8 @@
           <input type="text" placeholder="name" id="newProductName" name="newProductName" required />
           <div class="row">
             <div class="price">
-              <input type="number" placeholder="price" id="newProductPrice" name="newProductPrice" step="0.01" required />
+              <input type="number" placeholder="price" id="newProductPrice" name="newProductPrice" step="0.01"
+                required />
               <!-- <input type="text" placeholder="currency" id="newProductCurrency" name="newProductCurrency" value="USD"
                 required disabled /> -->
               <select name="newProductCurrency" id="newProductCurrency">
@@ -143,8 +145,10 @@
 
         <div class="searchEntity" id="inventorySearchEntity">
           <div class="content">
-            <a class="back" href="javascript:closeSearch('inventorySearchEntity');"><i class="fa-solid fa-arrow-left"></i></a>
-            <input type="text" name="" id="inventorySearchField" class="searchField" placeholder="Product name, category, quantity or price">
+            <a class="back" href="javascript:closeSearch('inventorySearchEntity');"><i
+                class="fa-solid fa-arrow-left"></i></a>
+            <input type="text" name="" id="inventorySearchField" class="searchField"
+              placeholder="Product name, category, quantity or price">
             <div class="searchloader"></div>
           </div>
         </div>
@@ -152,7 +156,7 @@
 
       <div class="categories">
         <ul>
-          
+
         </ul>
       </div>
 
@@ -169,20 +173,23 @@
         </div>
         <form id="editProductFormForm" enctype="multipart/form-data">
           <input type="hidden" id="editProductId" name="editProductId" />
-          <input type="text" placeholder="Barcode" id="editProductBarcode" name="editProductBarcode" required disabled />
+          <input type="text" placeholder="Barcode" id="editProductBarcode" name="editProductBarcode" required
+            disabled />
           <input type="text" placeholder="Name" id="editProductName" name="editProductName" required />
           <div class="row">
             <div class="price">
-              <input type="number" placeholder="Price" id="editProductPrice" name="editProductPrice" required />
-                <select name="editProductCurrency" id="editProductCurrency">
-                  <option value="USD">USD</option>
-                  <option value="LBP">LBP</option>
-                </select>
+              <input type="number" placeholder="Price" id="editProductPrice" name="editProductPrice" step="0.01"
+                required />
+              <select name="editProductCurrency" id="editProductCurrency">
+                <option value="USD">USD</option>
+                <option value="LBP">LBP</option>
+              </select>
             </div>
 
             <div class="productQuantity">
               <span class="editless"><i class="fa-solid fa-minus"></i></span>
-              <input type="number" placeholder="Quantity" id="editProductQuantity" name="editProductQuantity" min="0" required />
+              <input type="number" placeholder="Quantity" id="editProductQuantity" name="editProductQuantity" min="0"
+                required />
               <span class="editmore"><i class="fa-solid fa-plus"></i></span>
             </div>
           </div>
@@ -222,8 +229,10 @@
 
         <div class="searchEntity" id="ordersSearchEntity">
           <div class="content">
-            <a class="back" href="javascript:closeSearch('ordersSearchEntity');"><i class="fa-solid fa-arrow-left"></i></a>
-            <input type="text" name="" id="orderSearchField" class="searchField" placeholder="Order name, date or total">
+            <a class="back" href="javascript:closeSearch('ordersSearchEntity');"><i
+                class="fa-solid fa-arrow-left"></i></a>
+            <input type="text" name="" id="orderSearchField" class="searchField"
+              placeholder="Order name, date or total">
             <div class="searchloader"></div>
           </div>
         </div>
@@ -239,15 +248,19 @@
     </div>
 
     <div class="subsection sectionNotifications">
-      <div class="sectionTitle"><h2>Notifications</h2></div>
+      <div class="sectionTitle">
+        <h2>Notifications</h2>
+      </div>
 
       <p>
-        
+
       </p>
     </div>
 
     <div class="subsection sectionProfile">
-      <div class="sectionTitle"><h2>Profile</h2></div>
+      <div class="sectionTitle">
+        <h2>Profile</h2>
+      </div>
 
     </div>
 
@@ -259,6 +272,39 @@
         <li data-tag="notifications"><a href="javascript:;"><i class="fa-solid fa-bell"></i></a></li>
         <li data-tag="profile"><a href="javascript:;"><i class="fa-solid fa-id-badge"></i></a></li>
       </ul>
+    </div>
+  </div>
+
+  <div class="container" id="accountContainer">
+    <div class="loginSection">
+      <div class="loginForm">
+        <h2>Login</h2>
+        <div class="logintabs">
+          <ul>
+            <li class="active"><a href="javsacript:;">Email</a></li>
+            <li><a href="javascript:;">Phone</a></li>
+          </ul>
+        </div>
+
+        <form id="loginForm" method="POST" action="javascript:;">
+          <input type="email" name="email" id="loginEmail" placeholder="Email" autocomplete="off" autofill="off">
+          <input type="text" name="phoneNumber" id="loginPhoneNumber" placeholder="Phone number" autocomplete="off" autofill="off" hidden="true">
+          <input type="password" name="password" id="password" placeholder="Password" required autocomplete="off" autofill="off">
+
+          <div class="passreset">
+            <a href="javascript:;" id="forgotPassword">Forgot password?</a>
+          </div>
+
+          <div class="loginactions">
+            <button type="submit">Login</button>
+          </div>
+        </form>
+
+
+      </div>
+      <div class="registerLink">
+        Don't have an account? <a href="javascript:;" id="createAccount">Register here</a>
+      </div>
     </div>
   </div>
 
@@ -296,7 +342,24 @@
       </div>
     </div>
   </div>
-  
+
+  <div class="closeCart">
+    <div class="content">
+      <i class="fa-solid fa-coins"></i>
+
+      <!-- <h5>Total</h5> -->
+      <p>
+        <span class="usd"></span>
+        <span class="lbp"></span>
+      </p>
+
+      <div class="actions">
+        <a class="acceptCloseCart">OK</a>
+        <a class="dismissCloseCart secondary">Cancel</a>
+      </div>
+    </div>
+  </div>
+
   <div id="loader">
     <span class="spinner"></span>
   </div>
@@ -304,7 +367,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="plugins.js"></script>
   <script src="script.js"></script>
-  
+
 </body>
 
 </html>

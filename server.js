@@ -6,7 +6,11 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const { authenticateToken, isAdmin } = require('./middleware/auth');
 
+const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
 const Inventory = require('./models/Inventory');
@@ -28,6 +32,7 @@ const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected"))
     .catch((err) => console.log(err));
+
 
 
 
@@ -56,7 +61,7 @@ app.get('/get-orders', async (req, res) => {
 app.post("/add-product", upload.single("image"), async (req, res) => {
     try {
         const { name, barcode, price, currency, type, quantity, variation } = req.body;
-        
+
         if (!name || !barcode || !price || !quantity) {
             return res.status(400).json({ message: "All fields are required: name, barcode, price, quantity" });
         }
@@ -235,6 +240,138 @@ app.post('/unlink-order', async (req, res) => {
     }
 });
 
+app.post('/register', async (req, res) => {
+    const { password, phoneNumber, email, role } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    if (!password || (!phoneNumber && !email)) {
+        return res.status(400).json({ message: 'Missing account info' });
+    }
+
+    if (email) {
+        const existingUserByEmail = await User.findOne({ email });
+        if (existingUserByEmail) {
+            return res.status(400).json({ message: 'Email is already registered.' });
+        }
+    }
+
+    if (phoneNumber) {
+        const existingUserByPhone = await User.findOne({ phoneNumber });
+        if (existingUserByPhone) {
+            return res.status(400).json({ message: 'Phone number is already registered.' });
+        }
+    }
+
+    try {
+        const newUser = new User({ password: hashedPassword, phoneNumber, email, role, lastLogin: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB') });
+        await newUser.save();
+
+        //get created user id
+        const createdId = newUser._id.toString();
+
+        let user  = await User.findOne({ _id: String(createdId) });
+
+        const token = jwt.sign({ id: createdId }, process.env.JWT_SECRET);
+
+        res.status(200).json({
+            token,
+            userInfo: {
+                id: user._id,
+                email: user.email,
+                phone: user.phoneNumber,
+                role: user.role,
+                isLoggedIn: user.isLoggedIn,
+                lastLogout: user.lastLogout,
+                lastLogin: user.lastLogin,
+                emailVerified: user.emailVerified,
+                phoneVerified: user.phoneVerified
+            }
+        });
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+app.post('/login', async (req, res) => {
+    const { email, phoneNumber, password } = req.body;
+    let user;
+
+    if ((!email && !phoneNumber) || !password) {
+        return res.status(400).json({ message: 'Please enter credentials.' });
+    }
+
+    if (email) {
+        user = await User.findOne({ email: String(email) });
+    } else if (phoneNumber) {
+        user = await User.findOne({ phoneNumber: String(phoneNumber) });
+    } else {
+        return res.status(400).json({ message: 'Please enter email or phone number.' });
+    }
+
+    if (!user) {
+        return res.status(400).json({ message: 'User not found' });
+    } else {
+        if (user.isLoggedIn) {
+            return res.status(403).json({ message: 'User already loggedin' });
+        } else {
+            user.isLoggedIn = true;
+            await user.save();
+        }
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+        return res.status(400).json({ message: 'Incorrect password' });
+    } else {
+        user.lastLogin = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB');
+        await user.save();
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+
+    res.status(200).json({
+        token,
+        userInfo: {
+            id: user._id,
+            email: user.email,
+            phone: user.phoneNumber,
+            role: user.role,
+            isLoggedIn: user.isLoggedIn,
+            lastLogout: user.lastLogout,
+            lastLogin: user.lastLogin,
+            emailVerified: user.emailVerified,
+            phoneVerified: user.phoneVerified
+        }
+    });
+});
+
+app.post('/logout', async (req, res) => {
+    const { userId } = req.body;
+    let user;
+
+    if (!userId) {
+        return res.status(400).json({ message: 'User id required.' });
+    } else {
+        user = await User.findOne({ _id: Object(userId) });
+    }
+
+    if (!user) {
+        return res.status(400).json({ message: 'User not found' });
+    } else {
+        if (!user.isLoggedIn) {
+            return res.status(400).json({ message: 'User is already logged out.' });
+        } else {
+            user.isLoggedIn = false;
+            user.lastLogout = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB');
+            await user.save();
+        }
+
+    }
+
+    res.status(200).json({ message: 'Logged out successfully.' });
+});
+
+
 //PUT
 app.put('/edit-product', upload.single("image"), async (req, res) => {
     try {
@@ -274,6 +411,26 @@ app.put('/edit-product', upload.single("image"), async (req, res) => {
         res.status(500).json({ message: "Error updating product", error: error.message });
     }
 });
+
+//DELETE
+app.delete('/delete-all-products', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        await Product.deleteMany({});
+        res.status(200).json({ message: "All products deleted successfully." });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting products", error: error.message });
+    }
+});
+
+app.delete('/delete-all-orders', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        await Order.deleteMany({});
+        res.status(200).json({ message: "All orders deleted successfully." });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting orders", error: error.message });
+    }
+});
+
 
 
 // Set server to listen on port 5000

@@ -1,6 +1,7 @@
 
-// let API_URL = "http://localhost:5000"
-let API_URL = "https://posos.onrender.com"
+// const API_URL = "http://localhost:5000"
+const API_URL = "https://posos.onrender.com"
+const USDLBP_RATE = 90000;
 
 // var singleMode = true;
 var lastScannedCode = null;
@@ -706,6 +707,7 @@ function showSection(section) {
       hideScanner();
       hideNotifications();
       hideProfile();
+      hideLogin();
 
       setTimeout(() => {
         showInventory();
@@ -717,6 +719,7 @@ function showSection(section) {
       hideScanner();
       hideNotifications();
       hideProfile();
+      hideLogin();
 
       setTimeout(() => {
         showOrders();
@@ -728,6 +731,7 @@ function showSection(section) {
       hideOrders();
       hideScanner();
       hideProfile();
+      hideLogin();
 
       setTimeout(() => {
         showNotifications();
@@ -739,10 +743,23 @@ function showSection(section) {
       hideOrders();
       hideScanner();
       hideNotifications();
+      hideLogin();
 
       setTimeout(() => {
         showProfile();
       }, 500);
+      break;
+
+    case 'login':
+      hideInventory();
+      hideOrders();
+      hideScanner();
+      hideNotifications();
+      hideProfile();
+
+      setTimeout(() => {
+        showLogin();
+      }, 500)
       break;
 
     default:
@@ -750,6 +767,7 @@ function showSection(section) {
       hideOrders();
       hideProfile();
       hideNotifications();
+      hideLogin();
 
       setTimeout(() => {
         showScanner();
@@ -989,6 +1007,9 @@ function hideNotifications() {
 function hideProfile() {
   $('.sectionProfile').fadeOut();
 }
+function hideLogin() {
+  $('#accountContainer').fadeOut();
+}
 
 function showInventory() {
   $('body').addClass('graybody');
@@ -1019,10 +1040,16 @@ function showNotifications() {
 function showProfile() {
   $('body').addClass('graybody');
   $('.sectionProfile').fadeIn();
+  loadProfile();
+}
+
+function showLogin() {
+  $('#accountContainer').fadeIn();
 }
 
 async function getProducts() {
   try {
+    $('#loader').fadeIn();
     const response = await fetch(API_URL + '/get-products', {
       method: 'GET',
       headers: {
@@ -1260,6 +1287,25 @@ function hidePopup() {
 
 
 $(document).ready(function () {
+  if (!isUserLoggedIn()) {
+    showSection('login');
+    $(document).on('submit', '#loginForm', function () {
+      $('#loader').fadeIn()
+      login();
+    });
+
+    $(document).on('click', '.alert .dismissAlert', function () {
+      dismissAlert();
+    });
+    return;
+  } else {
+    showSection('scanner');
+    eventsHandling()
+  }
+
+});
+
+function eventsHandling() {
   $('#loader').fadeIn();
   getProducts();
   $('#loader').fadeOut();
@@ -1440,41 +1486,11 @@ $(document).ready(function () {
   });
 
   $(document).on('click', '#confirmCart', function () {
-    $('#loader').fadeIn();
     if (scannedProducts.length === 0) {
       makeAlert("Your cart is empty!");
-      return;
+    } else {
+      openCartDetails();
     }
-
-    const orderData = {
-      name: "Cart #" + $('#cartName').val(), // You can customize this
-      itemsCount: scannedProducts.length,
-      total: scannedProducts.reduce((sum, product) => sum + product.totalPrice, 0),
-      items: scannedProducts
-    };
-
-    $.ajax({
-      url: API_URL + '/add-order',  // API endpoint
-      type: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify(orderData),
-      success: function (response) {
-        console.log("Order created successfully:", response);
-
-        scannedProducts = [];
-        $('#productInfo').hide();
-        $('#scannedProducts').html('');
-        $('#scannerContainer').removeClass('shrink');
-        $('#barcodeForm').removeClass('moveup');
-      },
-      error: function (xhr, status, error) {
-        console.error("Error creating order:", error);
-        makeAlert("Failed to place the order.");
-      }
-    });
-
-    $('#loader').fadeOut();
-
   });
 
   $(document).on('click', '.ordersback', function () {
@@ -1667,12 +1683,52 @@ $(document).ready(function () {
     }, 300);
   });
 
-  $(document).on('click', '.alert .dismissAlert', function () {
-    dismissAlert();
-  });
-});
+  
+}
+
+async function openCartDetails() {
+  $('#loader').fadeIn();
+
+  const orderData = {
+    name: "Cart #" + $('#cartName').val(), // You can customize this
+    itemsCount: scannedProducts.length,
+    total: scannedProducts.reduce((sum, product) => sum + product.totalPrice, 0),
+    items: scannedProducts
+  };
+
+  let totalUSD = scannedProducts.reduce((sumusd, product) => sumusd + product.price * product.selectedQty, 0);
+  let totalLBP = scannedProducts.reduce((sumlbp, product) => sumlbp + (product.price * product.selectedQty) * USDLBP_RATE, 0);
+  let formattedTotalLBP = totalLBP.toLocaleString();
 
 
+  const userConfirmed = await closeCart(totalUSD, formattedTotalLBP);
+
+  if (userConfirmed) {
+    $.ajax({
+      url: API_URL + '/add-order',  // API endpoint
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(orderData),
+      success: function (response) {
+        console.log("Order created successfully:", response);
+
+        scannedProducts = [];
+        $('#productInfo').hide();
+        $('#scannedProducts').html('');
+        $('#scannerContainer').removeClass('shrink');
+        $('#barcodeForm').removeClass('moveup');
+        $('#loader').fadeOut();
+      },
+      error: function (xhr, status, error) {
+        console.error("Error creating order:", error);
+        makeAlert("Failed to place the order.");
+        $('#loader').fadeOut();
+      }
+    });
+  } else {
+    $('#loader').fadeOut();
+  }
+}
 function applySort(selectedSortOption, selectedSortMethod) {
   isSorted = true;
   if (selectedSection == 'orders') {
@@ -1979,9 +2035,170 @@ function makeAlert(msg, type = null) {
   });
 }
 
+function closeCart(totalusd, totallbp) {
+  return new Promise((resolve, reject) => {
+    errorSound.play().catch(error => console.error("Error playing beep:", error));
+
+    $('.closeCart .usd').text(totalusd.toFixed(2) + " USD");
+    $('.closeCart .lbp').text(totallbp + " LBP");
+    $('.closeCart').addClass('show');
+    $('.closeCart .content').addClass('slideup');
+
+    $(document).one('click', '.acceptCloseCart', function () {
+      dismissCloseCart();
+      resolve(true);
+    });
+
+    $(document).one('click', '.dismissCloseCart', function () {
+      dismissCloseCart();
+      resolve(false);
+    });
+  });
+}
+
 function dismissAlert() {
   $('.alert .content').removeClass('slideup');
   $('.alert').removeClass('show');
   $('.alert .actions .acceptAlert').remove();
   $('.alert .actions .dismissAlert').removeClass('secondary').text("OK");
+}
+
+function dismissCloseCart() {
+  $('.closeCart .content').removeClass('slideup');
+  $('.closeCart').removeClass('show');
+}
+
+function login() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const phoneNumber = document.getElementById("loginPhoneNumber").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if ((email == '' && phoneNumber == '') || password == '') {
+    makeAlert("Credentials required");
+    return;
+  } else {
+    //validate email format
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      makeAlert("Invalid email.");
+      return;
+    }
+  }
+
+  const loginData = {
+    email: email == '' ? null : email,
+    phoneNumber: phoneNumber == '' ? null : phoneNumber,
+    password: password
+  };
+
+  fetch(API_URL + '/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(loginData)
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+      return response.json();
+    })
+    .then(data => {
+      localStorage.setItem('user', data);
+      console.log('done')
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      makeAlert('Login failed. Please check your credentials.');
+    });
+
+}
+
+function logout() {
+  fetch(API_URL + '/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+      return response.json();
+    })
+    .then(data => {
+      localStorage.removeItem('user');
+      showSection('scanner')
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      makeAlert('Logout failed. Please try again.');
+    });
+}
+
+function isUserLoggedIn() {
+  if (localStorage.getItem('user')) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function register() {
+  const email = document.getElementById("registerEmail").value.trim();
+  const phoneNumber = document.getElementById("registerPhoneNumber").value.trim();
+  const password = document.getElementById("registerPassword").value.trim();
+
+  if ((email == '' && phoneNumber == '') || password == '') {
+    makeAlert("Credentials required");
+    return;
+  } else {
+    //validate email format
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      makeAlert("Invalid email.");
+      return;
+    }
+  }
+
+  const registerData = {
+    email: email == '' ? null : email,
+    phoneNumber: phoneNumber == '' ? null : phoneNumber,
+    password: password
+  };
+
+  fetch(API_URL + '/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(registerData)
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Registration failed');
+      }
+      return response.json();
+    })
+    .then(data => {
+      localStorage.setItem('user', data);
+      $('#loader').fadeIn();
+      showSection('profile')
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      makeAlert('Registration failed. Please check your credentials.');
+    });
+}
+
+function deleteAllProducts() {
+  fetch(API_URL + '/delete-all-products', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${yourToken}`
+    }
+  });
 }

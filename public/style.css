@@ -72,6 +72,7 @@ button:hover {
   background-color: #218838;
 }
 
+.loginForm,
 #addNewProduct,
 #productInfo {
   padding: 0 5px;
@@ -81,13 +82,89 @@ button:hover {
   background-color: #222222;
   margin-top: -30px;
 }
-
+.loginForm h2,
 #addNewProduct h2,
 #productInfo h2 {
   color: #828282;
   margin-bottom: 10px;
   font-family: "poppins", serif;
   padding: 0 10px;
+}
+
+.loginForm {
+  max-width: 300px;
+  margin: 0 auto;
+}
+.loginForm form {
+  margin-bottom: 10px;
+}
+.loginForm h2 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.passreset {
+  padding-top: 5px;
+  padding-right: 10px;
+  text-align: right;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.passreset a {
+  color: #828282;
+  text-decoration: none;
+}
+
+.registerLink {
+  text-align: center;
+  font-size: 12px;
+  color: #828282;
+}
+.registerLink a {
+  color: #28a745;
+  text-decoration: none;
+}
+
+.logintabs {
+  margin-bottom: 10px;
+  width: 100%;
+  background-color: #222222;
+  border-radius: 40px;
+}
+.logintabs ul {
+  display: flex;
+  list-style-type: none;
+  align-items: center;
+  justify-content: space-between;
+}
+.logintabs ul li {
+  flex: 0 0 50%;
+  padding: 3px;
+}
+.logintabs ul li a {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: #828282;
+  border-radius: 40px;
+  padding: 5px;
+  font-size: 14px;
+}
+.logintabs ul li.active a {
+  background-color: #111111;
+  color: #28a745;
+}
+
+.loginactions {
+  text-align: center;
+}
+.loginactions button {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+#addNewProduct {
+  border-radius: 0 0 20px 20px;
 }
 
 #productInfo .headTitle {
@@ -261,6 +338,7 @@ button:hover {
   font-size: 16px;
 }
 
+.loginForm input,
 #editProductForm input,
 #addNewProduct input {
   width: 100%;
@@ -274,7 +352,17 @@ button:hover {
   color: #828282;
   margin-bottom: 5px;
 }
-
+.loginForm input:disabled,
+#editProductForm input:disabled,
+#addNewProduct input:disabled {
+  opacity: 0.5;
+}
+.loginForm input:-internal-autofill-selected,
+#editProductForm input:-internal-autofill-selected,
+#addNewProduct input:-internal-autofill-selected {
+  background-color: inherit !important;
+}
+.loginForm select,
 #editProductForm select,
 #addNewProduct select {
   width: 100%;
@@ -286,27 +374,33 @@ button:hover {
   border: none;
   outline: none;
   color: #828282;
-  margin-bottom: 5px;
-  -moz-appearance: none;
-  -webkit-appearance: none;
   background-image: url(./images/selectarrowdown.svg);
   background-position: calc(100% - 10px) 50%;
   background-size: 10px;
   background-repeat: no-repeat;
   margin-bottom: 0;
   max-width: 80px;
+  -moz-appearance: none;
+  -webkit-appearance: none;
 }
+.loginForm select::-ms-expand,
 #editProductForm select::-ms-expand,
 #addNewProduct select::-ms-expand {
   display: none;
 }
-
+.loginForm #editProductImage,
+.loginForm #newProductImage,
 #editProductForm #editProductImage,
+#editProductForm #newProductImage,
+#addNewProduct #editProductImage,
 #addNewProduct #newProductImage {
   padding: 5px;
 }
-
+.loginForm #editProductImage::file-selector-button,
+.loginForm #newProductImage::file-selector-button,
 #editProductForm #editProductImage::file-selector-button,
+#editProductForm #newProductImage::file-selector-button,
+#addNewProduct #editProductImage::file-selector-button,
 #addNewProduct #newProductImage::file-selector-button {
   border-radius: 50px;
   padding: 5px 10px;
@@ -316,26 +410,21 @@ button:hover {
   outline: none;
   color: #828282;
 }
-
-#editProductForm input:disabled,
-#addNewProduct input:disabled {
-  opacity: 0.5;
-}
-
+.loginForm .row,
 #editProductForm .row,
 #addNewProduct .row {
   display: flex;
   gap: 5px;
   margin-bottom: 5px;
 }
-
+.loginForm .row .price,
 #editProductForm .row .price,
 #addNewProduct .row .price {
   display: flex;
   gap: 5px;
   width: 60%;
 }
-
+.loginForm .row .price input,
 #editProductForm .row .price input,
 #addNewProduct .row .price input {
   display: flex;
@@ -343,13 +432,13 @@ button:hover {
   width: 60%;
   margin-bottom: 0;
 }
-
+.loginForm .row .productQuantity,
 #editProductForm .row .productQuantity,
 #addNewProduct .row .productQuantity {
   width: 40%;
   justify-content: flex-end;
 }
-
+.loginForm .row .productQuantity input,
 #editProductForm .row .productQuantity input,
 #addNewProduct .row .productQuantity input {
   margin-bottom: 0;
@@ -359,28 +448,43 @@ button:hover {
   padding-left: 0;
   padding-right: 0;
 }
-
+.loginForm .productQuantity .editless,
+.loginForm .productQuantity .editmore,
+.loginForm .productQuantity .newless,
+.loginForm .productQuantity .newmore,
 #editProductForm .productQuantity .editless,
 #editProductForm .productQuantity .editmore,
+#editProductForm .productQuantity .newless,
+#editProductForm .productQuantity .newmore,
+#addNewProduct .productQuantity .editless,
+#addNewProduct .productQuantity .editmore,
 #addNewProduct .productQuantity .newless,
 #addNewProduct .productQuantity .newmore {
   background-color: #111111;
 }
-
+.loginForm .actions,
 #editProductForm .actions,
 #addNewProduct .actions {
   display: flex;
   gap: 5px;
 }
+.loginForm .actions button,
 #editProductForm .actions button,
 #addNewProduct .actions button {
   padding: 10px;
   font-size: 14px;
 }
+.loginForm .actions button[type=reset],
 #editProductForm .actions button[type=reset],
 #addNewProduct .actions button[type=reset] {
-  background-color: transparent;
   background-color: #111111;
+}
+
+.loginForm {
+  background-color: transparent;
+}
+.loginForm input {
+  background-color: #222222;
 }
 
 #editProductForm .row {
@@ -747,6 +851,10 @@ header {
 .subsection {
   display: none;
   padding: 70px 10px 0;
+}
+
+.sectionScanner {
+  display: none;
 }
 
 .sectionTitle {
@@ -1473,6 +1581,7 @@ header {
   color: #28a745;
 }
 
+.closeCart,
 .alert {
   position: fixed;
   top: 0;
@@ -1486,10 +1595,12 @@ header {
   transition: all 0.3s ease-in-out;
   overflow: hidden;
 }
+.closeCart.show,
 .alert.show {
   opacity: 1;
   visibility: visible;
 }
+.closeCart .content,
 .alert .content {
   position: absolute;
   bottom: -100%;
@@ -1504,17 +1615,33 @@ header {
   opacity: 0;
   visibility: hidden;
 }
+.closeCart .content i,
 .alert .content i {
   font-size: 40px;
   margin-bottom: 20px;
 }
+.closeCart .content p,
 .alert .content p {
   margin-bottom: 30px;
 }
+.closeCart .content p span,
+.alert .content p span {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #28a745;
+}
+.closeCart .content p span.lbp,
+.alert .content p span.lbp {
+  color: #828282;
+}
+.closeCart .content .actions,
 .alert .content .actions {
   display: flex;
   gap: 5px;
 }
+.closeCart .content .actions a,
 .alert .content .actions a {
   width: 100%;
   padding: 15px;
@@ -1526,9 +1653,11 @@ header {
   font-size: 16px;
   display: block;
 }
+.closeCart .content .actions a.secondary,
 .alert .content .actions a.secondary {
   background-color: #222222;
 }
+.closeCart .content.slideup,
 .alert .content.slideup {
   transition-delay: 0.1s;
   bottom: 5px;
