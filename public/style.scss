@@ -67,11 +67,14 @@ button {
     border-radius: 30px;
     cursor: pointer;
     font-size: 16px;
+
+    &.secondary{
+        background-color: #111111;
+        color:#828282;
+    }
 }
 
-button:hover {
-    background-color: #218838;
-}
+
 
 .loginForm,
 #addNewProduct,
@@ -95,7 +98,7 @@ button:hover {
     max-width: 300px;
     margin: 0 auto;
 
-    form{
+    form {
         margin-bottom: 10px;
     }
 
@@ -165,13 +168,13 @@ button:hover {
     }
 }
 
-.loginactions{
+.loginactions {
     text-align: center;
 
-    button{
+    button {
         // width:auto;
-        padding:10px 20px;
-        font-size:14px;
+        padding: 10px 20px;
+        font-size: 14px;
     }
 }
 
@@ -879,8 +882,8 @@ header {
     padding: 70px 10px 0;
 }
 
-.sectionScanner{
-    display:none;
+.sectionScanner,#accountContainer,.bottomNav{
+    display: none;
 }
 
 .sectionTitle {
@@ -1767,4 +1770,33 @@ header {
             visibility: visible;
         }
     }
+}
+
+.userInfo {
+    display:flex;
+    align-items: center;
+    margin-bottom:30px;
+
+    .avatar {
+        width: 60px;
+        flex: 0 0 60px;
+        font-size: 50px;
+        color: #828282;
+    }
+
+    .info {
+        flex: 0 0 calc(100% - 60px);
+        width: calc(100% - 60px);
+        color: #828282;
+        font-size: 14px;
+    }
+}
+
+.userMoreInfo{
+    padding:10px;
+    background-color: #111111;
+    border-radius: 20px;
+    color:#828282;
+    
+    margin-bottom:30px;
 }

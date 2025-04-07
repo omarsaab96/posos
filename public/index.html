@@ -258,9 +258,24 @@
     </div>
 
     <div class="subsection sectionProfile">
-      <div class="sectionTitle">
+      <!-- <div class="sectionTitle">
         <h2>Profile</h2>
+      </div> -->
+
+      <div class="userInfo">
+        <div class="avatar">
+          <i class="fa-solid fa-circle-user"></i>
+        </div>
+        <div class="info">
+
+        </div>
       </div>
+
+      <div class="userMoreInfo">
+
+      </div>
+
+      <button id="logoutBtn" class="secondary">Logout</button>
 
     </div>
 
@@ -287,9 +302,9 @@
         </div>
 
         <form id="loginForm" method="POST" action="javascript:;">
-          <input type="email" name="email" id="loginEmail" placeholder="Email" autocomplete="off" autofill="off">
-          <input type="text" name="phoneNumber" id="loginPhoneNumber" placeholder="Phone number" autocomplete="off" autofill="off" hidden="true">
-          <input type="password" name="password" id="password" placeholder="Password" required autocomplete="off" autofill="off">
+          <input type="email" name="email" id="loginEmail" placeholder="Email" autocomplete="new-email">
+          <input type="text" name="phoneNumber" id="loginPhoneNumber" placeholder="Phone number" autocomplete="new-phone" hidden="true">
+          <input type="password" name="password" id="password" placeholder="Password" required autocomplete="new-password">
 
           <div class="passreset">
             <a href="javascript:;" id="forgotPassword">Forgot password?</a>

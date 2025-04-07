@@ -243,6 +243,7 @@ app.post('/unlink-order', async (req, res) => {
 app.post('/register', async (req, res) => {
     const { password, phoneNumber, email, role } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
+    const randomName = 'User_' + Math.floor(100000 + Math.random() * 900000);
 
     if (!password || (!phoneNumber && !email)) {
         return res.status(400).json({ message: 'Missing account info' });
@@ -263,7 +264,7 @@ app.post('/register', async (req, res) => {
     }
 
     try {
-        const newUser = new User({ password: hashedPassword, phoneNumber, email, role, lastLogin: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB') });
+        const newUser = new User({ name: randomName, password: hashedPassword, phoneNumber, email, role, lastLogin: new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB') });
         await newUser.save();
 
         //get created user id
@@ -277,6 +278,7 @@ app.post('/register', async (req, res) => {
             token,
             userInfo: {
                 id: user._id,
+                name: user.name,
                 email: user.email,
                 phone: user.phoneNumber,
                 role: user.role,
@@ -294,39 +296,40 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { email, phoneNumber, password } = req.body;
+    let user = null;
 
     if ((email == null && phoneNumber == null) || !password) {
         return res.status(400).json({ message: 'Please enter credentials.' });
     }
 
+    // Lookup user by email or phone number
     if (email != null) {
-        const user = await User.findOne({ email: String(email) });
+        user = await User.findOne({ email: String(email) });
     } else if (phoneNumber != null) {
-        const user = await User.findOne({ phoneNumber: String(phoneNumber) });
-    } else {
-        const user = null;
-        return res.status(400).json({ message: 'Please enter email or phone number.' });
+        user = await User.findOne({ phoneNumber: String(phoneNumber) });
     }
 
-    if (user==null) {
-        return res.status(400).json({ message: 'User not found' });
-    } else {
-        if (user.isLoggedIn) {
-            return res.status(403).json({ message: 'User already loggedin' });
-        } else {
-            user.isLoggedIn = true;
-            await user.save();
-        }
+    if (!user) {
+        return res.status(400).json({ message: 'Account not found' });
     }
 
+    // Check password first
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
         return res.status(400).json({ message: 'Incorrect password' });
-    } else {
-        user.lastLogin = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB');
-        await user.save();
     }
 
+    // Check if already logged in
+    if (user.isLoggedIn) {
+        return res.status(403).json({ message: 'User already logged in' });
+    }
+
+    // If everything is good, mark as logged in
+    user.isLoggedIn = true;
+    user.lastLogin = new Date().toLocaleDateString('en-GB') + " " + new Date().toLocaleTimeString('en-GB');
+    await user.save();
+
+    // Generate token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 
     res.status(200).json({
@@ -344,6 +347,7 @@ app.post('/login', async (req, res) => {
         }
     });
 });
+
 
 app.post('/logout', async (req, res) => {
     const { userId } = req.body;

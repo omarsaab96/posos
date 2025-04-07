@@ -1,6 +1,5 @@
-
-// const API_URL = "http://localhost:5000"
-const API_URL = "https://posos.onrender.com"
+const API_URL = "http://localhost:5000"
+// const API_URL = "https://posos.onrender.com"
 const USDLBP_RATE = 90000;
 
 // var singleMode = true;
@@ -1015,6 +1014,7 @@ function showInventory() {
   $('body').addClass('graybody');
   $('.sectionInventory').fadeIn();
   $('#loader').fadeIn();
+  $('.bottomNav').fadeIn();
   closeEditProduct();
   closeProductDetails();
   getProducts();
@@ -1023,6 +1023,7 @@ function showOrders() {
   $('body').addClass('graybody');
   $('.sectionOrders').fadeIn();
   $('#loader').fadeIn();
+  $('.bottomNav').fadeIn();
   closeOrderDetails();
   getOrders();
 }
@@ -1032,19 +1033,58 @@ function showScanner() {
   getProducts();
   $('#loader').fadeOut();
   $('.sectionScanner').fadeIn();
+  $('.bottomNav').fadeIn();
 }
 function showNotifications() {
   $('body').addClass('graybody');
   $('.sectionNotifications').fadeIn();
+  $('.bottomNav').fadeIn();
 }
 function showProfile() {
   $('body').addClass('graybody');
   $('.sectionProfile').fadeIn();
+  $('.bottomNav').fadeIn();
   loadProfile();
+}
+
+function loadProfile(){
+  $('#loader').fadeIn();
+  let profile = JSON.parse(localStorage.getItem('user'))
+  profile = profile.userInfo;
+
+  let profileName = profile.name || null;
+  let profileEmail = profile.email || null;
+  let profilePhone = profile.phone || null;
+  let profileRole = profile.role;
+
+  $('.userInfo .info').append(`<h2 class="userName">${profileName}</h2>`);
+  $('.userMoreInfo').append(`<div class="userEmail">${profileEmail}</div>`);
+  $('.userMoreInfo').append(`<div class="userPhone">${profilePhone}</div>`);
+
+  if(profileRole=="admin"){
+    $('.userInfo .info').append(`<div class="badge">Admin</div>`);
+  }
+
+  $('#loader').fadeOut();
 }
 
 function showLogin() {
   $('#accountContainer').fadeIn();
+
+  $('.logintabs li a').click(function(){
+    $('.logintabs li').removeClass('active');
+    $(this).parent().addClass('active');
+
+    if($(this).text() == "Email"){
+      $('#loginPhoneNumber').attr('hidden', true);
+      $('#loginEmail').removeAttr('hidden');
+    }
+    
+    if($(this).text() == "Phone"){
+      $('#loginPhoneNumber').removeAttr('hidden');
+      $('#loginEmail').attr('hidden', true);
+    }
+  });
 }
 
 async function getProducts() {
@@ -1684,7 +1724,12 @@ function eventsHandling() {
     }, 300);
   });
 
-  
+  $(document).on('click', '#logoutBtn', function () {
+    $('#loader').fadeIn();
+    logout(JSON.parse(localStorage.getItem('user')).userInfo.id);
+  });
+
+
 }
 
 async function openCartDetails() {
@@ -2077,8 +2122,7 @@ function login() {
   if ((email == '' && phoneNumber == '') || password == '') {
     makeAlert("Credentials required");
     return;
-  } else {
-    //validate email format
+  } else if(email!=''){
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
       makeAlert("Invalid email.");
@@ -2099,29 +2143,32 @@ function login() {
     },
     body: JSON.stringify(loginData)
   })
-    .then(response => {
+    .then(async response => {
       if (!response.ok) {
-        throw new Error('Login failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
       }
       return response.json();
     })
     .then(data => {
-      localStorage.setItem('user', data);
-      console.log('done')
+      localStorage.setItem('user', JSON.stringify(data));
+      location.reload();
     })
     .catch(error => {
       console.error('Error:', error);
-      makeAlert('Login failed. Please check your credentials.');
+      $('#loader').fadeOut();
+      makeAlert(error.message); 
     });
 
 }
 
-function logout() {
+function logout(id) {
   fetch(API_URL + '/logout', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
-    }
+    },
+    body: JSON.stringify({ userId: id })
   })
     .then(response => {
       if (!response.ok) {
@@ -2131,10 +2178,11 @@ function logout() {
     })
     .then(data => {
       localStorage.removeItem('user');
-      showSection('scanner')
+      location.reload();
     })
     .catch(error => {
       console.error('Error:', error);
+      $('#loader').fadeIn();
       makeAlert('Logout failed. Please try again.');
     });
 }
