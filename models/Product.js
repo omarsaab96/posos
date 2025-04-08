@@ -11,7 +11,7 @@ function formatDate() {
 
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  barcode: { type: String, required: true, unique: true },
+  barcode: { type: String, required: true},
   price: { type: Number, required: true },
   variation: { type: String, default: null },
   currency: { type: String, default: 'USD' },
@@ -21,6 +21,7 @@ const productSchema = new mongoose.Schema({
   date: { type: String, default:  formatDate()},
   lastRestock: { type: String, default:  formatDate()},
   image: { type: String, default:'default.jpg' },
+  createdBy: { type: String, required: true },
   linked: { type: Boolean, default:true },
 });
 

@@ -38,8 +38,10 @@ mongoose.connect(process.env.MONGO_URI)
 
 //GET
 app.get('/get-products', async (req, res) => {
+    const { userId } = req.query;
+
     try {
-        const products = await Product.find();
+        const products = await Product.find({ createdBy: userId });
 
         res.status(200).json(products);
     } catch (error) {
@@ -60,7 +62,7 @@ app.get('/get-orders', async (req, res) => {
 // POST
 app.post("/add-product", upload.single("image"), async (req, res) => {
     try {
-        const { name, barcode, price, currency, type, quantity, variation } = req.body;
+        const { name, barcode, price, currency, type, quantity, variation, createdBy } = req.body;
 
         if (!name || !barcode || !price || !quantity) {
             return res.status(400).json({ message: "All fields are required: name, barcode, price, quantity" });
@@ -84,7 +86,7 @@ app.post("/add-product", upload.single("image"), async (req, res) => {
         }
 
         // Save product to database
-        const newProduct = new Product({ name, barcode, price, currency, type, quantity, image: imageUrl, variation });
+        const newProduct = new Product({ name, barcode, price, currency, type, quantity, image: imageUrl, variation, createdBy });
         await newProduct.save();
 
         res.status(201).json(newProduct);

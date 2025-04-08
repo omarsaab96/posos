@@ -360,6 +360,7 @@ async function submitNewProduct(event) {
   formData.append("type", document.getElementById("newProductType").value.trim() || "Miscellaneous");
   formData.append("quantity", parseInt(document.getElementById("newProductQuantity").value.trim()));
   formData.append("variation", document.getElementById("newProductVariation").value.trim() || null);
+  formData.append("createdBy", JSON.parse(localStorage.getItem('user')).userInfo.id);
 
   const fileInput = document.getElementById("newProductImage");
   if (fileInput.files.length > 0) {
@@ -1098,7 +1099,7 @@ function showLogin() {
 async function getProducts() {
   try {
     $('#loader').fadeIn();
-    const response = await fetch(API_URL + '/get-products', {
+    const response = await fetch(API_URL + '/get-products?userId=' + JSON.parse(localStorage.getItem('user')).userInfo.id, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -2231,7 +2232,7 @@ function register() {
   if ((email == '' && phoneNumber == '') || password == '') {
     makeAlert("Credentials required");
     return;
-  } else if (email != ''){
+  } else if (email != '') {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
       makeAlert("Invalid email.");
@@ -2335,11 +2336,11 @@ async function deleteAllOrders() {
 
 }
 
-function switchToRegister(){
+function switchToRegister() {
   $('.loginSection').hide();
   $('.registerSection').show();
 }
-function switchToLogin(){
+function switchToLogin() {
   $('.loginSection').show();
   $('.registerSection').hide();
 }
