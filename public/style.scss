@@ -169,7 +169,7 @@ button {
 
 .loginactions {
     text-align: center;
-    margin-top:30px;
+    margin-top: 30px;
 
     button {
         // width:auto;
@@ -504,6 +504,54 @@ button {
 
     input {
         margin-bottom: 0;
+    }
+}
+
+#addNewProductForm,
+#editProductForm {
+    .productImg {
+        text-align: center;
+        margin: 0 auto;
+        margin-bottom: 30px;
+        position: relative;
+        width: 200px;
+        height: 200px;
+        border-radius: 20px;
+        overflow: hidden;
+
+        .clear,
+        label {
+            display: block;
+            position: relative;
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            color: #828282;
+            font-size: 14px;
+            bottom: 5px;
+            left: calc(50% - 20px);
+            transform: translateX(-50%);
+            background-color: #222222;
+            text-align: center;
+            line-height: 32px;
+        }
+
+        .clear {
+            left: calc(50% + 20px);
+
+            &.hidden{
+                opacity:0.3;
+            }
+        }
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
     }
 }
 
@@ -880,6 +928,17 @@ header {
 .subsection {
     display: none;
     padding: 70px 10px 0;
+
+    &.sectionProfile {
+        height: calc(100vh - 100px);
+        position: relative;
+
+        #logoutBtn {
+            position: absolute;
+            bottom: 0;
+            width: calc(100% - 20px);
+        }
+    }
 }
 
 .sectionScanner,
@@ -913,7 +972,7 @@ header {
     .refresh,
     .filter,
     .sort,
-    .search {
+    .search,.allRead {
         padding: 5px;
         line-height: 22px;
         background-color: #111111;
@@ -1277,6 +1336,7 @@ header {
     width: 100%;
     padding-top: 30px;
     color: #828282;
+    font-style: italic;
 
     i {
         font-size: 50px;
@@ -1778,30 +1838,98 @@ header {
     display: flex;
     align-items: center;
     margin-bottom: 30px;
+    justify-content: space-between;
 
     .avatar {
         width: 60px;
         flex: 0 0 60px;
         font-size: 50px;
         color: #828282;
+        border-radius: 50%;
+        overflow: hidden;
+
+        img {
+            display: block;
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+        }
     }
 
-    .info {
+    >.info {
+        padding-left: 10px;
         flex: 0 0 calc(100% - 60px);
         width: calc(100% - 60px);
         color: #828282;
         font-size: 14px;
+
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .info {
+            #profileNameInputField {
+                display: none;
+                margin-top: 0;
+                background-color: #111111;
+                padding: 5px;
+                color: #828282;
+                border: none;
+                border-radius: 10px;
+            }
+        }
+
+
+        .action {
+
+            .editProfileAvatarAndName {
+                color: #828282;
+                font-size:16px; 
+            }
+
+            .profileFieldEditActions {
+                display: none;
+
+                .cancelProfileEdit {
+                    color: #f42f2f;
+                    margin-right: 10px;
+                    background-color: #111111;
+                    padding: 5px;
+                    border-radius: 10px;
+                    width: 26px;
+                    height: 26px;
+                    display: inline-block;
+                    text-align: center;
+                }
+
+                .confirmProfileEdit {
+                    color: #28a745;
+                    background-color: #111111;
+                    padding: 5px;
+                    border-radius: 10px;
+                    width: 26px;
+                    height: 26px;
+                    display: inline-block;
+                    text-align: center;
+                }
+            }
+        }
     }
+
+
+}
+
+.adminControl {
+    margin-bottom: 30px;
 }
 
 .adminActions {
-    margin-bottom: 30px;
     padding: 5px;
     background-color: #111111;
     border-radius: 30px;
     display: flex;
-    align-items: center ;
-    gap:5px;    
+    align-items: center;
+    gap: 5px;
 
     button {
         background-color: #222222;
@@ -1811,14 +1939,181 @@ header {
 }
 
 .userMoreInfo {
-    padding: 10px;
+    padding: 15px;
     background-color: #111111;
     border-radius: 20px;
     color: #828282;
-
     margin-bottom: 30px;
+
+    .accountField {
+        margin-bottom: 30px;
+
+        .label {
+            opacity: 0.6;
+        }
+
+        .verification {
+            margin-top: 5px;
+            font-size: 14px;
+
+            a {
+                color: #28a745;
+                text-decoration: none;
+            }
+        }
+
+        .field {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+
+            a {
+                font-size: 14px;
+                color: #828282;
+            }
+
+            input {
+                margin-top: 5px;
+                width: calc(100% - 80px);
+                background-color: #222222;
+                padding: 5px;
+                border: none;
+                border-radius: 10px;
+                color: #828282;
+                display: none;
+            }
+
+            .profileFieldEditActions {
+                display: none;
+
+                .cancelProfileEdit {
+                    color: #f42f2f;
+                    margin-right: 10px;
+                    background-color: #222222;
+                    padding: 5px;
+                    border-radius: 10px;
+                    width: 26px;
+                    height: 26px;
+                    display: inline-block;
+                    text-align: center;
+                }
+
+                .confirmProfileEdit {
+                    color: #28a745;
+                    background-color: #222222;
+                    padding: 5px;
+                    border-radius: 10px;
+                    width: 26px;
+                    height: 26px;
+                    display: inline-block;
+                    text-align: center;
+                }
+            }
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
 }
 
-.registerSection{
-    display:none;
+.registerSection {
+    display: none;
+}
+
+
+#inventoryClearAlert,
+#ordersClearAlert {
+    padding: 7px 10px;
+    border-radius: 10px;
+    width: 100%;
+    color: #ffffff;
+    background-color: #28a745;
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 14px;
+    display: none;
+}
+
+.profileEditdiv {
+    display: none;
+    max-height:100%;
+    overflow: auto;
+
+    .loginForm {
+        max-width: 100%;
+        padding: 0;
+        color: #828282;
+
+        .profileBack {
+            text-align: left;
+            padding: 0;
+            margin: 0;
+        }
+
+        .profileAvatar {
+            text-align: center;
+            margin: 0 auto;
+            margin-bottom: 10px;
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 20px;
+            overflow: hidden;
+
+            .clear,
+            label {
+                display: block;
+                position: relative;
+                position: absolute;
+                width: 30px;
+                height: 30px;
+                border-radius: 10px;
+                color: #828282;
+                font-size: 14px;
+                bottom: 5px;
+                left: calc(50% - 20px);
+                transform: translateX(-50%);
+                background-color: #222222;
+                text-align: center;
+                line-height: 32px;
+            }
+
+            .clear {
+                left: calc(50% + 20px);
+            }
+
+            img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
+        input {
+            background-color: #111111;
+        }
+
+        .loginactions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+    }
+}
+
+#editProfileForm {
+    margin-bottom: 40px;
+}
+
+.passwordchangebtn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.newPass {
+    display: none;
 }

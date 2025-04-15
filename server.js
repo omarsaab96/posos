@@ -50,10 +50,24 @@ app.get('/get-products', async (req, res) => {
 });
 
 app.get('/get-orders', async (req, res) => {
+    const { userId } = req.query;
+
     try {
-        const orders = await Order.find();
+        const orders = await Order.find({ createdBy: userId });
 
         res.status(200).json(orders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+app.get('/get-notifications', async (req, res) => {
+    const { userId } = req.query;
+
+    try {
+        const notifications = await Notification.find({ createdBy: userId });
+
+        res.status(200).json(notifications);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -97,8 +111,7 @@ app.post("/add-product", upload.single("image"), async (req, res) => {
 
 app.post('/add-order', async (req, res) => {
     try {
-        console.log(req)
-        const { name, itemsCount, total, items } = req.body;
+        const { name, itemsCount, total, items, createdBy } = req.body;
 
         // Validate required fields
         if (!name || !itemsCount || !total || !items || !Array.isArray(items)) {
@@ -111,7 +124,8 @@ app.post('/add-order', async (req, res) => {
             // date: new Date().toLocaleDateString('en-GB'), // Format: DD/MM/YYYY
             itemsCount,
             total,
-            items
+            items,
+            createdBy
         });
 
         // Save to database
@@ -338,6 +352,7 @@ app.post('/login', async (req, res) => {
         token,
         userInfo: {
             id: user._id,
+            avatar:user.avatar,
             name: user.name,
             email: user.email,
             phone: user.phoneNumber,
@@ -377,6 +392,162 @@ app.post('/logout', async (req, res) => {
     res.status(200).json({ message: 'Logged out successfully.' });
 });
 
+app.post('/edit-profile', upload.single("profileAvatar"), async (req, res) => {
+    try {
+        const { userId, name, email, phoneNumber } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ message: 'Missing userId' });
+        }
+
+        const updateFields = {};
+
+        if (req.body.profileAvatar === "avatar2.jpg") {
+            updateFields.avatar = null;
+        } else if (req.file) {
+            const base64Image = req.file.buffer.toString("base64");
+
+            const response = await axios.post(
+                `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+                { image: base64Image },
+                { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+            );
+
+            const avatarUrl = response.data.data.url;
+            updateFields.avatar = avatarUrl;
+        }
+
+        if (name) {
+            updateFields.name = name;
+        }
+
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ message: 'Invalid email format' });
+            }
+            updateFields.email = email;
+            updateFields.emailVerified = false;
+        } else {
+            updateFields.email = null;
+            updateFields.emailVerified = false;
+        }
+
+        if (phoneNumber) {
+            updateFields.phoneNumber = phoneNumber;
+            updateFields.phoneVerified = false;
+        } else {
+            updateFields.phoneNumber = null;
+            updateFields.phoneVerified = false;
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            updateFields,
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const token = jwt.sign({ id: updatedUser._id }, process.env.JWT_SECRET);
+
+        res.status(200).json({
+            token,
+            userInfo: {
+                id: updatedUser._id,
+                avatar: updatedUser.avatar,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                phone: updatedUser.phoneNumber,
+                role: updatedUser.role,
+                isLoggedIn: updatedUser.isLoggedIn,
+                lastLogout: updatedUser.lastLogout,
+                lastLogin: updatedUser.lastLogin,
+                emailVerified: updatedUser.emailVerified,
+                phoneVerified: updatedUser.phoneVerified
+            }
+        });
+
+    } catch (err) {
+        console.error('Error updating profile:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+app.post('/check-password', async (req, res) => {
+    try {
+        const { userId, currentPassword } = req.body;
+
+        if (!userId || !currentPassword) {
+            return res.status(400).json({ valid: false, message: 'Missing userId or password' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ valid: false, message: 'User not found' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (isMatch) {
+            return res.status(200).json({ valid: true });
+        } else {
+            return res.status(200).json({ valid: false });
+        }
+
+    } catch (err) {
+        console.error('Error checking password:', err);
+        res.status(500).json({ valid: false, message: 'Server error' });
+    }
+});
+
+app.post('/update-password', async (req, res) => {
+    try {
+        const { userId, newPassword } = req.body;
+
+        if (!userId || !newPassword) {
+            return res.status(400).json({ success: false, message: 'Missing userId or new password' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { password: hashedPassword },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const token = jwt.sign({ id: updatedUser }, process.env.JWT_SECRET);
+
+        res.status(200).json({
+            token,
+            userInfo: {
+                id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                phone: updatedUser.phoneNumber,
+                role: updatedUser.role,
+                isLoggedIn: updatedUser.isLoggedIn,
+                lastLogout: updatedUser.lastLogout,
+                lastLogin: updatedUser.lastLogin,
+                emailVerified: updatedUser.emailVerified,
+                phoneVerified: updatedUser.phoneVerified
+            }
+        });
+
+    } catch (err) {
+        console.error('Error updating password:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+
+
 //PUT
 app.put('/edit-product', upload.single("image"), async (req, res) => {
     try {
@@ -387,10 +558,11 @@ app.put('/edit-product', upload.single("image"), async (req, res) => {
         }
 
         let imageUrl;
-        if (req.file) {
+        if (req.body.image === "default.jpg") {
+            imageUrl = "/uploads/default.jpg";
+        } else if (req.file) {
             const base64Image = req.file.buffer.toString("base64");
 
-            // Upload new image to ImgBB
             const response = await axios.post(
                 `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
                 { image: base64Image },

@@ -16,6 +16,7 @@ const orderSchema = new mongoose.Schema({
     total: { type: Number, required: true },
     items: { type: Object, default: null },
     linked: { type: Boolean, default:true },
+    createdBy: { type: String, required: true }
 });
 
 const Order = mongoose.model('Order', orderSchema);

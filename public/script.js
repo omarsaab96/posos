@@ -10,6 +10,7 @@ var scannedProducts = [];
 var inventoryProducts = [];
 var filteredByCategoryInventoryProducts = [];
 var orders = [];
+var notifications = [];
 var selectedSection = '';
 var isSorted = false;
 var isFilteredByCat = false;
@@ -334,6 +335,13 @@ async function AskToAddProduct(barcode) {
     document.getElementById("newProductLastRestock").value = formatDate();
     document.getElementById("scannerContainer").classList.add('shrink');
     document.getElementById("barcodeForm").style.display = "none";
+    document.querySelector('#addNewProductForm .productImg img').src = '/uploads/default.jpg';
+    setTimeout(function () {
+      $('html, body').animate({
+        scrollTop: $('#addNewProduct').offset().top + 50
+      }, 300);
+    }, 300);
+
   } else {
     resumeScanner()
   }
@@ -840,6 +848,7 @@ function showProductDetails(barcode) {
       $('.sectionInventory > .sectionTitle .sectionTitleActions').hide();
       $('.sectionInventory >.sectionTitle h2').addClass('inventoryBack').html('<i class="fa-solid fa-arrow-left"></i> Inventory');
       $('.categories').hide();
+
     },
     error: function (error) {
       console.error('Error fetching order details:', error);
@@ -1020,6 +1029,7 @@ function showInventory() {
   closeProductDetails();
   getProducts();
 }
+
 function showOrders() {
   $('body').addClass('graybody');
   $('.sectionOrders').fadeIn();
@@ -1028,6 +1038,7 @@ function showOrders() {
   closeOrderDetails();
   getOrders();
 }
+
 function showScanner() {
   $('body').removeClass('graybody');
   $('#loader').fadeIn();
@@ -1035,12 +1046,58 @@ function showScanner() {
   $('#loader').fadeOut();
   $('.sectionScanner').fadeIn();
   $('.bottomNav').fadeIn();
+
+  if (scannedProducts.length > 0) {
+    refreshScannedProducts();
+  }
 }
+
 function showNotifications() {
+  $('#loader').fadeIn();
+
   $('body').addClass('graybody');
   $('.sectionNotifications').fadeIn();
   $('.bottomNav').fadeIn();
+
+  getNotifications();
+
+ 
+
+  $('#loader').fadeOut();
 }
+
+async function getNotifications(){
+  try {
+    $('#loader').fadeIn();
+    const response = await fetch(API_URL + '/get-notifications?userId=' + JSON.parse(localStorage.getItem('user')).userInfo.id, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    notifications = await response.json();
+
+    notifications = notifications.filter(x => x.linked)
+    
+    if (notifications.length == 0) {
+      $('.sectionNotifications').append('<div class="noProducts"><i class="fa-solid fa-circle-exclamation"></i><span>No notifications</span></div>');
+    } else {
+      renderNotifications(notifications);
+    }
+  } catch (error) {
+    $('.sectionNotifications').append(`<div class="noProducts"><i class="fa-solid fa-circle-xmark"></i><span>${error.message}</span></div>`);
+  }
+}
+
+function markNotificationsRead() {
+
+}
+
 function showProfile() {
   $('body').addClass('graybody');
   $('.sectionProfile').fadeIn();
@@ -1057,24 +1114,62 @@ function loadProfile() {
   let profileEmail = profile.email || null;
   let profilePhone = profile.phone || null;
   let profileRole = profile.role;
+  let profileEmailIsVerified = profile.emailVerified;
+  let profilePhoneIsVerified = profile.phoneVerified;
+  let profileAvatar = profile.avatar || 'avatar2.jpg';
 
-  $('.userInfo .info').html('');
+  $('.userInfo .info .info').html('');
   $('.userMoreInfo').html('');
   $('.adminActions').html('');
 
-  $('.userInfo .info').append(`<h2 class="userName">${profileName}</h2>`);
-  $('.userMoreInfo').append(`<div class="userEmail">${profileEmail}</div>`);
-  $('.userMoreInfo').append(`<div class="userPhone">${profilePhone}</div>`);
+  $('.userInfo .info .info').append(`
+    <h2 class="userName">${profileName}</h2>
+  `);
 
-  if (profileRole == "admin") {
-    $('.userInfo .info').append(`<div class="badge">Admin</div>`);
-    $('.adminActions').append('<button class="secondary" id="clearInventory">Clear Inventory</button>')
-    $('.adminActions').append('<button class="secondary" id="clearOrders">Clear Orders</button>')
-  } else {
-    $('.adminActions').hide();
-  }
+  const avatarImg = document.querySelector('.userInfo .avatar img');
+  avatarImg.src = profileAvatar;
 
-  $('#loader').fadeOut();
+  avatarImg.onload = function () {
+    $('.userMoreInfo').append(`
+      <div class="accountField">
+        <div class="label">Email</div>
+        <div class="field">
+          <span class="userEmail">${profileEmail || '<i>not provided</i>'}</span>
+        </div>
+        ${profileEmail != null && !profileEmailIsVerified ? `<div class="verification" style="display:none;"><a href="javascript:;">Verify email</a></div>` : ``}
+      </div>
+      <div class="accountField">
+        <div class="label">Phone number</div>
+        <div class="field">
+          <span class="userPhone">${profilePhone || '<i>not provided</i>'}</span>
+        </div>
+        ${profilePhone != null && !profilePhoneIsVerified ? `<div class="verification" style="display:none;"><a href="javascript:;">Verify phone number</a></div>` : ``}
+      </div>
+    `);
+
+    if (profileRole == "admin") {
+      $('.userInfo .info .info').append(`<div class="badge">Admin</div>`);
+      $('.adminActions').append('<button class="secondary" id="clearInventory">Clear Inventory</button>')
+      $('.adminActions').append('<button class="secondary" id="clearOrders">Clear Orders</button>')
+      $('.adminActions').wrap('<div class="adminControl"></div>')
+      $('.adminControl').append(`
+        <div id="inventoryClearAlert">
+          <i class="fa-regular fa-circle-check"></i> All Products deleted successfully 
+        </div>
+        <div id="ordersClearAlert">
+          <i class="fa-regular fa-circle-check"></i> All orders deleted successfully 
+        </div>
+      `);
+
+    } else {
+      $('.adminActions').hide();
+    }
+
+    $('#loader').fadeOut();
+  };
+
+
+
 }
 
 function showLogin() {
@@ -1085,13 +1180,18 @@ function showLogin() {
     $(this).parent().addClass('active');
 
     if ($(this).text() == "Email") {
+      $('#loginPhoneNumber').val('');
       $('#loginPhoneNumber').attr('hidden', true);
       $('#loginEmail').removeAttr('hidden');
+      $('#loginEmail').focus();
+
     }
 
     if ($(this).text() == "Phone") {
-      $('#loginPhoneNumber').removeAttr('hidden');
+      $('#loginEmail').val('');
       $('#loginEmail').attr('hidden', true);
+      $('#loginPhoneNumber').removeAttr('hidden');
+      $('#loginPhoneNumber').focus();
     }
   });
 }
@@ -1131,14 +1231,25 @@ async function getProducts() {
 
     //check if scannedproducts is not empty, go through the scanned products, and update their quantities from the inventoryproducts array
     if (scannedProducts.length > 0) {
-      scannedProducts.forEach(scanned => {
-        let inventoryItem = inventoryProducts.find(item => item.barcode === scanned.barcode);
+      const toRemove = [];
 
+
+      scannedProducts.forEach(scanned => {
+        let inventoryItem = inventoryProducts.find(item => item._id === scanned._id);
 
         if (inventoryItem) {
-          scanned.quantity = inventoryItem.quantity; // Update scanned product quantity
+          scanned.name = inventoryItem.name;
+          scanned.price = inventoryItem.price;
+          scanned.image = inventoryItem.image;
+          scanned.quantity = inventoryItem.quantity;
+        } else {
+          makeAlert(`Product ${scanned.name} was removed from inventory. Changes will be reflected in cart`)
+          toRemove.push(scanned._id);
+          $('#scannedProducts .product[data-pid="' + scanned.barcode + '"]').remove();
         }
       });
+
+      scannedProducts = scannedProducts.filter(product => !toRemove.includes(product._id));
     }
 
 
@@ -1165,7 +1276,7 @@ function renderInventoryTypes(types) {
 
 async function getOrders() {
   try {
-    const response = await fetch(API_URL + '/get-orders', {
+    const response = await fetch(API_URL + '/get-orders?userId=' + JSON.parse(localStorage.getItem('user')).userInfo.id, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -1197,7 +1308,7 @@ async function getOrders() {
 
 async function getOrdersCount() {
   try {
-    const response = await fetch(API_URL + '/get-orders', {
+    const response = await fetch(API_URL + '/get-orders?userId=' + JSON.parse(localStorage.getItem('user')).userInfo.id, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -1220,7 +1331,6 @@ async function getOrdersCount() {
 }
 
 function openEditProduct(barcode) {
-
   $('.sectionInventory > .sectionTitle').hide();
   $('#productDetails').hide();
 
@@ -1237,6 +1347,7 @@ function openEditProduct(barcode) {
     document.getElementById("editProductType").value = product.type;
     document.getElementById("editProductQuantity").value = product.quantity;
     document.getElementById("editProductVariation").value = product.variation;
+    $("#editProductFormForm .productImg img").attr('src', product.image || '/uploads/default.jpg');
 
     document.getElementById("editProductForm").style.display = "block";
     document.getElementById("InventoryProducts").style.display = "none";
@@ -1271,6 +1382,10 @@ function confirmEditProduct() {
     formData.append("image", fileInput.files[0]);
   }
 
+  if (document.querySelector('#editProductFormForm .productImg img').src.endsWith("default.jpg")) {
+    formData.append("image", "default.jpg");
+  }
+
   fetch(API_URL + "/edit-product", {
     method: "PUT",
     body: formData
@@ -1287,7 +1402,6 @@ function confirmEditProduct() {
       closeEditProduct();
       getProducts();
       showProductDetails(updatedProduct.barcode)
-      $('#loader').fadeOut();
     })
     .catch(error => {
       console.error("Error:", error);
@@ -1333,7 +1447,6 @@ function hidePopup() {
     $('.hideOnOrders').show()
   }, 500);
 }
-
 
 $(document).ready(function () {
   if (!isUserLoggedIn()) {
@@ -1603,6 +1716,14 @@ function eventsHandling() {
     showOrders();
   });
 
+  $(document).on('click', '.sectionNotifications .sectionTitleActions .refresh', function () {
+    showNotifications();
+  });
+
+  $(document).on('click', '.sectionNotifications .sectionTitleActions .allRead', function () {
+    markNotificationsRead();
+  });
+
   $(document).on('click', '.sectionInventory .sort', function () {
     showPopup('inventory');
 
@@ -1758,6 +1879,63 @@ function eventsHandling() {
     deleteAllOrders();
   });
 
+  $(document).on('click', '.profileBack', function () {
+    closeProfileEdit()
+  });
+
+  $(document).on('reset', '#editProfileForm', function () {
+    closeProfileEdit()
+  });
+
+  $(document).on('submit', '#editProfileForm', function () {
+    updateProfile()
+  });
+
+  $(document).on('click', '#changepassword', function () {
+    openChangePassword();
+  });
+
+  $(document).on('reset', '#changePasswordForm', function () {
+    closeChangePassword()
+  });
+
+  $(document).on('submit', '#changePasswordForm', function () {
+    updatePassword()
+  });
+
+  document.getElementById('profileAvatarInputField').addEventListener('change', function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.querySelector('#editProfileForm .profileAvatar img').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  document.getElementById('editProductImage').addEventListener('change', function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.querySelector('#editProductFormForm .productImg img').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  document.getElementById('newProductImage').addEventListener('change', function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.querySelector('#addNewProductForm .productImg img').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
 
 }
 
@@ -1768,7 +1946,8 @@ async function openCartDetails() {
     name: "Cart #" + $('#cartName').val(), // You can customize this
     itemsCount: scannedProducts.length,
     total: scannedProducts.reduce((sum, product) => sum + product.totalPrice, 0),
-    items: scannedProducts
+    items: scannedProducts,
+    createdBy: JSON.parse(localStorage.getItem('user')).userInfo.id
   };
 
   let totalUSD = scannedProducts.reduce((sumusd, product) => sumusd + product.price * product.selectedQty, 0);
@@ -1804,6 +1983,7 @@ async function openCartDetails() {
     $('#loader').fadeOut();
   }
 }
+
 function applySort(selectedSortOption, selectedSortMethod) {
   isSorted = true;
   if (selectedSection == 'orders') {
@@ -2292,6 +2472,10 @@ async function deleteAllProducts() {
       return response.json();
     }).then(data => {
       console.log("Inventory cleared successfully:", data);
+      $('#inventoryClearAlert').fadeIn();
+      setTimeout(function () {
+        $('#inventoryClearAlert').fadeOut();
+      }, 1000)
       getProducts();
       $('#loader').fadeOut();
     }).catch(error => {
@@ -2324,6 +2508,10 @@ async function deleteAllOrders() {
       return response.json();
     }).then(data => {
       console.log("Orders deleted successfully", data);
+      $('#ordersClearAlert').fadeIn();
+      setTimeout(function () {
+        $('#ordersClearAlert').fadeOut();
+      }, 1000)
       getOrders();
       $('#loader').fadeOut();
     }).catch(error => {
@@ -2340,7 +2528,215 @@ function switchToRegister() {
   $('.loginSection').hide();
   $('.registerSection').show();
 }
+
 function switchToLogin() {
   $('.loginSection').show();
   $('.registerSection').hide();
+}
+
+function refreshScannedProducts() {
+  scannedProducts.forEach(scanned => {
+
+    scanned.totalPrice = Number((scanned.price * scanned.selectedQty).toFixed(2));
+
+    $('#scannedProducts').find('.product[data-pid="' + scanned.barcode + '"]').find('#productName').text(scanned.name)
+    $('#scannedProducts').find('.product[data-pid="' + scanned.barcode + '"]').find('.productQuantity input').val(scanned.selectedQty)
+    $('#scannedProducts').find('.product[data-pid="' + scanned.barcode + '"]').find('#productPrice').text(scanned.totalPrice)
+    $('#scannedProducts').find('.product[data-pid="' + scanned.barcode + '"]').find('#productImage').attr('src', scanned.image == null ? '/uploads/default.jpg' : scanned.image)
+
+    if (scanned.selectedQty > scanned.quantity) {
+      makeAlert(`Quantity of ${scanned.name} exceeds stock availability. Selected quantity will be set to maximum available quantity (${scanned.quantity}).`);
+
+      scanned.selectedQty = scanned.quantity;
+      scanned.totalPrice = Number((scanned.price * scanned.selectedQty).toFixed(2));
+
+      $('#scannedProducts').find('.product[data-pid="' + scanned.barcode + '"]').find('.productQuantity input').val(scanned.quantity)
+      $('#scannedProducts').find('.product[data-pid="' + scanned.barcode + '"]').find('#productPrice').text(scanned.totalPrice)
+
+    }
+
+  });
+}
+
+function editProfile() {
+  $('.profilediv').hide();
+  $('.profileEditdiv').show();
+
+  let profile = JSON.parse(localStorage.getItem('user')).userInfo;
+
+  document.querySelector('#editProfileForm .profileAvatar img').src = profile.avatar || 'avatar2.jpg';
+  $('.profileEditdiv #profileNameInputField').val(profile.name);
+  $('.profileEditdiv #profileEmailInputField').val(profile.email);
+  $('.profileEditdiv #profilePhoneInputField').val(profile.phone);
+}
+
+function closeProfileEdit() {
+  $('.profilediv').show();
+  $('.profileEditdiv').hide();
+}
+
+function updateProfile() {
+  $('#loader').fadeIn();
+  const name = document.getElementById('profileNameInputField').value.trim();
+  const email = document.getElementById('profileEmailInputField').value.trim();
+  const phone = document.getElementById('profilePhoneInputField').value.trim();
+  const avatarFile = document.querySelector('#editProfileForm .profileAvatar img').src.endsWith("avatar2.jpg") ? "avatar2.jpg" : document.getElementById('profileAvatarInputField').files[0];
+
+  if (email == "" && phone == "") {
+    makeAlert("Email or phone number required.")
+    $('#loader').fadeOut();
+    return;
+  }
+
+  if (email != "") {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      makeAlert('Invalid email address.');
+      $('#loader').fadeOut();
+      return;
+    }
+  }
+
+  const formData = new FormData();
+  const userId = JSON.parse(localStorage.getItem('user')).userInfo.id;
+
+  formData.append("userId", userId);
+  formData.append("name", name);
+  formData.append("email", email);
+  formData.append("phoneNumber", phone);
+
+  if (avatarFile) {
+    formData.append("profileAvatar", avatarFile);
+  }
+
+
+  fetch(API_URL + '/edit-profile', {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.userInfo) {
+        localStorage.setItem('user', JSON.stringify(data));
+        loadProfile();
+        closeProfileEdit();
+      } else {
+        makeAlert(data.message || 'Update failed.');
+        $('#loader').fadeOut();
+      }
+
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      makeAlert('An error occurred while updating the profile.');
+      $('#loader').fadeOut();
+    });
+}
+
+function clearAvatar() {
+  document.querySelector('#editProfileForm .profileAvatar img').src = "avatar2.jpg";
+  $('#profileAvatarInputField').val('');
+}
+
+function clearProductImage() {
+  document.querySelector('#editProductFormForm .productImg img').src = "/uploads/default.jpg";
+  $('#profileAvatarInputField').val('');
+}
+
+function clearNewProductImage() {
+  document.querySelector('#addNewProductForm .productImg img').src = "/uploads/default.jpg";
+  $('#newProductImage').val('');
+}
+
+function openChangePassword() {
+  $('#editProfileForm').hide();
+  $('#changepassword').hide();
+  $('.profileEditdiv .sectionTitle').hide();
+  $('.newPass').show();
+}
+
+function closeChangePassword() {
+  $('#editProfileForm').show();
+  $('#changepassword').show();
+  $('.profileEditdiv .sectionTitle').show();
+  $('.newPass').hide();
+
+  $('#profilePasswordField').val('');
+  $('#profilePasswordFieldNew').val('');
+  $('#profilePasswordFieldRepeat').val('');
+}
+
+function updatePassword() {
+  $('#loader').fadeIn();
+
+  let currentpass = $('#profilePasswordField').val().trim();
+  let newpass = $('#profilePasswordFieldNew').val().trim();
+  let repeatpass = $('#profilePasswordFieldRepeat').val().trim();
+
+  if (!currentpass || !newpass || !repeatpass) {
+    makeAlert("Please fill in all password fields");
+    $('#loader').fadeOut();
+    return;
+  }
+
+  if (newpass !== repeatpass) {
+    makeAlert("New passwords do not match");
+    $('#loader').fadeOut();
+    return;
+  }
+
+  checkCurrentPassword(currentpass).then(isValid => {
+    if (isValid) {
+      submitNewPassword(newpass);
+    } else {
+      makeAlert("Wrong current password");
+      $('#loader').fadeOut();
+    }
+  }).catch(() => {
+    makeAlert("Error verifying current password");
+    $('#loader').fadeOut();
+  });
+}
+
+function checkCurrentPassword(currentpass) {
+  return fetch(API_URL + '/check-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: JSON.parse(localStorage.getItem('user')).userInfo.id,
+      currentPassword: currentpass
+    })
+  })
+    .then(res => res.json())
+    .then(data => data.valid)
+}
+
+function submitNewPassword(newpass) {
+  fetch(API_URL + '/update-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: JSON.parse(localStorage.getItem('user')).userInfo.id,
+      newPassword: newpass
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      setTimeout(() => {
+        $("#passupdatedAlert").fadeOut()
+        setTimeout(() => {
+          $("#passupdatedAlert").fadeOut()
+          closeChangePassword();
+          console.log(JSON.stringify(data))
+          localStorage.setItem('user', JSON.stringify(data))
+          $('#loader').fadeOut();
+          loadProfile();
+        }, 500);
+      }, 500);
+
+    })
+    .catch(() => {
+      makeAlert("Server error while updating password");
+      $('#loader').fadeOut();
+    });
 }

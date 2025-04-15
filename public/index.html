@@ -81,6 +81,17 @@
       <div id="addNewProduct" style="display:none;">
         <h2>Add New Product</h2>
         <form id="addNewProductForm" enctype="multipart/form-data">
+
+          <div class="productImg">
+            <img src="/uploads/default.jpg" alt="">
+            <label for="newProductImage">
+              <i class="fa-solid fa-edit"></i>
+            </label>
+            <a href="javascript:clearNewProductImage();" class="clear">
+              <i class="fa-solid fa-xmark"></i>
+            </a>
+          </div>
+
           <input type="text" placeholder="barcode" id="newProductBarcode" name="newProductBarcode" required disabled />
           <input type="text" placeholder="name" id="newProductName" name="newProductName" required />
           <div class="row">
@@ -107,7 +118,7 @@
             value="0" required disabled />
           <input type="text" placeholder="image url" id="newProductLastRestock" name="newProductLastRestock"
             value="today" required disabled />
-          <input type="file" placeholder="image url" id="newProductImage" name="newProductImage" />
+          <input type="file" placeholder="image url" id="newProductImage" name="newProductImage" hidden />
 
           <div class="actions">
             <button type="reset">Cancel</button>
@@ -172,9 +183,20 @@
           <h2 class="editBack"><i class="fa-solid fa-arrow-left"></i> Edit product</h2>
         </div>
         <form id="editProductFormForm" enctype="multipart/form-data">
+
+          <div class="productImg">
+            <img src="/uploads/default.jpg" alt="">
+            <label for="editProductImage">
+              <i class="fa-solid fa-edit"></i>
+            </label>
+            <a href="javascript:clearProductImage();" class="clear">
+              <i class="fa-solid fa-xmark"></i>
+            </a>
+          </div>
+
           <input type="hidden" id="editProductId" name="editProductId" />
-          <input type="text" placeholder="Barcode" id="editProductBarcode" name="editProductBarcode" required
-            disabled />
+          <input type="text" placeholder="Barcode" id="editProductBarcode" name="editProductBarcode" required disabled
+            hidden />
           <input type="text" placeholder="Name" id="editProductName" name="editProductName" required />
           <div class="row">
             <div class="price">
@@ -197,7 +219,7 @@
           <input type="text" placeholder="Type" id="editProductType" name="editProductType" />
           <!-- <input type="text" placeholder="soldQuantity" id="editProductSoldQuantity" name="editProductSoldQuantity" value="0" required="" disabled=""> -->
           <!-- <input type="text" placeholder="image url" id="editProductLastRestock" name="editProductLastRestock" value="today" required="" disabled=""> -->
-          <input type="file" id="editProductImage" name="editProductImage" />
+          <input type="file" id="editProductImage" name="editProductImage" hidden />
 
           <div class="actions">
             <button type="reset">Cancel</button>
@@ -247,39 +269,103 @@
 
     </div>
 
+
     <div class="subsection sectionNotifications">
       <div class="sectionTitle">
         <h2>Notifications</h2>
+
+        <div class="sectionTitleActions">
+          <span class="refresh">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </span>
+          <span class="allRead">
+            <i class="fa-solid fa-check-double"></i>
+          </span>
+        </div>
       </div>
-
-      <p>
-
-      </p>
+      
+      
     </div>
 
     <div class="subsection sectionProfile">
-      <!-- <div class="sectionTitle">
-        <h2>Profile</h2>
-      </div> -->
+      <div class="profilediv">
+        <div class="userInfo">
+          <div class="avatar">
+            <img src="avatar2.jpg" alt="">
+          </div>
+          <div class="info">
+            <div class="info">
 
-      <div class="userInfo">
-        <div class="avatar">
-          <i class="fa-solid fa-circle-user"></i>
+            </div>
+            <div class="action">
+              <a href="javascript:editProfile();" class="editProfileAvatarAndName">
+                <i class="fa-solid fa-edit"></i>
+              </a>
+            </div>
+          </div>
+
         </div>
-        <div class="info">
+
+        <div class="userMoreInfo">
+
+        </div>
+
+        <div class="adminActions">
+
+        </div>
+
+        <button id="logoutBtn" class="secondary">Logout</button>
+      </div>
+
+      <div class="profileEditdiv">
+        <div class="loginForm">
+          <div class="sectionTitle">
+            <h2 class="profileBack"><i class="fa-solid fa-arrow-left"></i> Profile</h2>
+          </div>
+
+          <form id="editProfileForm" method="POST" action="javascript:;">
+            <div class="profileAvatar">
+              <img src="avatar2.jpg" alt="">
+              <label for="profileAvatarInputField">
+                <i class="fa-solid fa-edit"></i>
+              </label>
+              <a href="javascript:clearAvatar();" class="clear">
+                <i class="fa-solid fa-xmark"></i>
+              </a>
+            </div>
+            <input type="file" name="profileAvatar" id="profileAvatarInputField" autocomplete="new-avatar" hidden>
+            <input type="text" name="profileName" id="profileNameInputField" placeholder="Name" autocomplete="new-name">
+            <input type="email" name="email" id="profileEmailInputField" placeholder="Email" autocomplete="new-email">
+            <input type="text" name="phoneNumber" id="profilePhoneInputField" placeholder="Phone number"
+              autocomplete="new-phone">
+
+            <div class="loginactions">
+              <button class="secondary" type="reset">Cancel</button>
+              <button type="submit">Save</button>
+            </div>
+          </form>
+
+          <button class="passwordchangebtn secondary" id="changepassword">Change password <i
+              class="fa-solid fa-arrow-right"></i></button>
+
+          <div class="newPass">
+            <form action="javascript:;" id="changePasswordForm">
+              <input type="password" name="password" id="profilePasswordField" placeholder="Current password" required
+                autocomplete="new-password">
+              <input type="password" name="password" id="profilePasswordFieldNew" placeholder="New password" required
+                autocomplete="new-password">
+              <input type="password" name="password" id="profilePasswordFieldRepeat" placeholder="Repeat new password"
+                required autocomplete="new-password">
+
+              <div class="loginactions">
+                <button class="secondary" type="reset">Cancel</button>
+                <button type="submit">Save</button>
+              </div>
+            </form>
+          </div>
 
         </div>
       </div>
-
-      <div class="userMoreInfo">
-
-      </div>
-
-      <div class="adminActions">
-
-      </div>
-
-      <button id="logoutBtn" class="secondary">Logout</button>
 
     </div>
 
@@ -307,8 +393,10 @@
 
         <form id="loginForm" method="POST" action="javascript:;">
           <input type="email" name="email" id="loginEmail" placeholder="Email" autocomplete="new-email">
-          <input type="text" name="phoneNumber" id="loginPhoneNumber" placeholder="Phone number" autocomplete="new-phone" hidden="true">
-          <input type="password" name="password" id="loginpassword" placeholder="Password" required autocomplete="new-password">
+          <input type="text" name="phoneNumber" id="loginPhoneNumber" placeholder="Phone number"
+            autocomplete="new-phone" hidden="true">
+          <input type="password" name="password" id="loginpassword" placeholder="Password" required
+            autocomplete="new-password">
 
           <div class="passreset">
             <a href="javascript:;" id="forgotPassword">Forgot password?</a>
@@ -325,15 +413,17 @@
         Don't have an account? <a href="javascript:switchToRegister();" id="createAccount">Register here</a>
       </div>
     </div>
-    
+
     <div class="registerSection">
       <div class="loginForm">
         <h2>Register</h2>
 
         <form id="registerForm" method="POST" action="javascript:;">
           <input type="email" name="email" id="registerEmail" placeholder="Email" autocomplete="new-email">
-          <input type="text" name="phoneNumber" id="registerPhoneNumber" placeholder="Phone number" autocomplete="new-phone">
-          <input type="password" name="password" id="registerPassword" placeholder="Password" required autocomplete="new-password">
+          <input type="text" name="phoneNumber" id="registerPhoneNumber" placeholder="Phone number"
+            autocomplete="new-phone">
+          <input type="password" name="password" id="registerPassword" placeholder="Password" required
+            autocomplete="new-password">
 
           <div class="loginactions">
             <button type="submit">Create account</button>
@@ -372,6 +462,7 @@
       </div>
     </div>
   </div>
+
 
   <div class="alert">
     <div class="content">
