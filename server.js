@@ -14,6 +14,8 @@ const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
 const Inventory = require('./models/Inventory');
+const Notification = require('./models/Notification');
+
 
 const app = express();
 
@@ -352,7 +354,7 @@ app.post('/login', async (req, res) => {
         token,
         userInfo: {
             id: user._id,
-            avatar:user.avatar,
+            avatar: user.avatar,
             name: user.name,
             email: user.email,
             phone: user.phoneNumber,
@@ -546,6 +548,38 @@ app.post('/update-password', async (req, res) => {
     }
 });
 
+app.post('/add-notification', async (req, res) => {
+    try {
+        const { text, relatedProduct, type, createdBy } = req.body;
+
+        if (!text || !relatedProduct || !type || !createdBy) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const existing = await Notification.findOne({
+            relatedProduct: relatedProduct.trim(),
+            read: false
+        });
+
+        if (existing) {
+            return res.status(409).json({ error: 'Notification for this product already exists' });
+        }
+
+        const newNotification = new Notification({
+            text,
+            relatedProduct,
+            type,
+            createdBy
+        });
+
+        await newNotification.save();
+
+        res.status(201).json(newNotification);
+    } catch (err) {
+        console.error("Error saving notification:", err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 
 //PUT
@@ -586,6 +620,44 @@ app.put('/edit-product', upload.single("image"), async (req, res) => {
         res.status(200).json(updatedProduct);
     } catch (error) {
         res.status(500).json({ message: "Error updating product", error: error.message });
+    }
+});
+
+app.put('/notificationsMarkAsRead/:id', async (req, res) => {
+    try {
+        const updated = await Notification.findByIdAndUpdate(
+            req.params.id,
+            { read: true },
+            { new: true }
+        );
+
+        if (!updated) {
+            return res.status(404).json({ error: 'Notification not found' });
+        }
+
+        res.json(updated);
+    } catch (err) {
+        console.error("Error updating notification:", err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.put('/notificationsMarkAsRead/all/:id', async (req, res) => {
+    const userId = req.params.id;
+
+    try {
+        const result = await Notification.updateMany(
+            { createdBy: userId, read: false },
+            { $set: { read: true } }
+        );
+
+        res.json({
+            message: `All notifications for user ${userId} marked as read`,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (err) {
+        console.error("Error updating notifications:", err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

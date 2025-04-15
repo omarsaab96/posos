@@ -283,6 +283,9 @@
           </span>
         </div>
       </div>
+
+      <div id="notifications-container"></div>
+
       
       
     </div>
@@ -374,7 +377,7 @@
         <li data-tag="inventory"><a href="javascript:;"><i class="fa-solid fa-boxes-stacked"></i></a></li>
         <li data-tag="orders"><a href="javascript:;"><i class="fa-solid fa-receipt"></i></a></li>
         <li data-tag="scanner" class="active"><a href="javascript:;"><i class="fa-solid fa-barcode"></i></a></li>
-        <li data-tag="notifications"><a href="javascript:;"><i class="fa-solid fa-bell"></i></a></li>
+        <li data-tag="notifications"><a href="javascript:;"><i class="fa-solid fa-bell"></i><span id="notificationsCount">0</span></a></li>
         <li data-tag="profile"><a href="javascript:;"><i class="fa-solid fa-id-badge"></i></a></li>
       </ul>
     </div>
@@ -502,3 +505,9 @@
 </body>
 
 </html>
+
+<!-- 
+1- if product edited, check if it has a notification than check if the product is now good than delete the notification, if not than update the product in the notification
+2- view details from notification
+3- decrease quantity on order save
+-->

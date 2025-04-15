@@ -23,9 +23,15 @@ body {
 .graybody .bottomNav {
   background-color: #111111;
 }
+.graybody .bottomNav #notificationsCount {
+  background-color: #222222;
+}
 
 .graybody .bottomNav ul li.active a {
   background-color: #222222;
+}
+.graybody .bottomNav ul li.active a #notificationsCount {
+  background-color: #111111;
 }
 
 .graybody .bottomNav ul li:nth-child(3) a {
@@ -587,6 +593,19 @@ button.secondary {
   transform: translate(-50%, -50%);
   height: 100%;
 }
+#reader::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 2px;
+  border-radius: 20px;
+  background-color: #28a745;
+  animation: scan 3s infinite linear forwards;
+}
 #reader video {
   height: 100%;
   width: 100%;
@@ -702,6 +721,7 @@ header {
 .bottomNav ul li {
   flex: 0 0 20%;
   padding: 5px;
+  position: relative;
 }
 
 .bottomNav ul li a {
@@ -870,26 +890,10 @@ header {
   animation: spin 0.3s linear infinite forwards;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotateZ(0deg);
-  }
-  100% {
-    transform: rotateZ(360deg);
-  }
-}
 .highlight {
   animation: highlightEffect 0.5s linear;
 }
 
-@keyframes highlightEffect {
-  from {
-    background-color: #28a745;
-  }
-  to {
-    background-color: transparent;
-  }
-}
 .noTransition {
   transition: none;
 }
@@ -937,7 +941,8 @@ header {
 .sectionTitle .sectionTitleActions .refresh,
 .sectionTitle .sectionTitleActions .filter,
 .sectionTitle .sectionTitleActions .sort,
-.sectionTitle .sectionTitleActions .search, .sectionTitle .sectionTitleActions .allRead {
+.sectionTitle .sectionTitleActions .search,
+.sectionTitle .sectionTitleActions .allRead {
   padding: 5px;
   line-height: 22px;
   background-color: #111111;
@@ -953,13 +958,15 @@ header {
 .sectionTitle .sectionTitleActions .refresh:last-child,
 .sectionTitle .sectionTitleActions .filter:last-child,
 .sectionTitle .sectionTitleActions .sort:last-child,
-.sectionTitle .sectionTitleActions .search:last-child, .sectionTitle .sectionTitleActions .allRead:last-child {
+.sectionTitle .sectionTitleActions .search:last-child,
+.sectionTitle .sectionTitleActions .allRead:last-child {
   margin-right: 0;
 }
 .sectionTitle .sectionTitleActions .refresh.on,
 .sectionTitle .sectionTitleActions .filter.on,
 .sectionTitle .sectionTitleActions .sort.on,
-.sectionTitle .sectionTitleActions .search.on, .sectionTitle .sectionTitleActions .allRead.on {
+.sectionTitle .sectionTitleActions .search.on,
+.sectionTitle .sectionTitleActions .allRead.on {
   color: #28a745;
 }
 
@@ -1967,6 +1974,134 @@ header {
 
 .newPass {
   display: none;
+}
+
+#notificationsCount {
+  position: absolute;
+  top: 7px;
+  right: 18px;
+  background-color: #111111;
+  padding: 3px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #828282;
+}
+
+.notification {
+  background-color: #111111;
+  flex-direction: column;
+  display: block;
+  margin-bottom: 0;
+  flex: 0 0 calc(50% - 5px);
+  border-radius: 15px;
+  margin-bottom: 10px;
+  padding: 10px;
+  padding-left: 30px;
+  position: relative;
+}
+.notification .badge {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #28a745;
+  left: 12px;
+}
+.notification .title {
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #828282;
+}
+.notification .about {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.notification .about .date {
+  font-size: 12px;
+  color: #828282;
+  opacity: 0.6;
+}
+.notification .about .actions {
+  text-align: right;
+}
+.notification .about .actions a {
+  color: #28a745;
+  font-size: 12px;
+  text-decoration: none;
+  margin-right: 20px;
+  padding: 10px;
+}
+.notification .about .actions a:last-child {
+  margin: 0;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotateZ(0deg);
+  }
+  100% {
+    transform: rotateZ(360deg);
+  }
+}
+@keyframes highlightEffect {
+  from {
+    background-color: #28a745;
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes scan {
+  0% {
+    top: 20%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0;
+  }
+  50% {
+    top: 80%;
+    opacity: 1;
+  }
+  60% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    top: 20%;
+    opacity: 0;
+  }
+}
+@keyframes resize {
+  0% {
+    width: 100px;
+    height: 100px;
+  }
+  20% {
+    width: 250px;
+    height: 80px;
+  }
+  50% {
+    width: 250px;
+    height: 80px;
+  }
+  80% {
+    width: 100px;
+    height: 100px;
+  }
+  100% {
+    width: 100px;
+    height: 100px;
+  }
 }
 
 /*# sourceMappingURL=style.css.map */

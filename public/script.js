@@ -1052,51 +1052,7 @@ function showScanner() {
   }
 }
 
-function showNotifications() {
-  $('#loader').fadeIn();
 
-  $('body').addClass('graybody');
-  $('.sectionNotifications').fadeIn();
-  $('.bottomNav').fadeIn();
-
-  getNotifications();
-
- 
-
-  $('#loader').fadeOut();
-}
-
-async function getNotifications(){
-  try {
-    $('#loader').fadeIn();
-    const response = await fetch(API_URL + '/get-notifications?userId=' + JSON.parse(localStorage.getItem('user')).userInfo.id, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-
-    notifications = await response.json();
-
-    notifications = notifications.filter(x => x.linked)
-    
-    if (notifications.length == 0) {
-      $('.sectionNotifications').append('<div class="noProducts"><i class="fa-solid fa-circle-exclamation"></i><span>No notifications</span></div>');
-    } else {
-      renderNotifications(notifications);
-    }
-  } catch (error) {
-    $('.sectionNotifications').append(`<div class="noProducts"><i class="fa-solid fa-circle-xmark"></i><span>${error.message}</span></div>`);
-  }
-}
-
-function markNotificationsRead() {
-
-}
 
 function showProfile() {
   $('body').addClass('graybody');
@@ -1449,6 +1405,8 @@ function hidePopup() {
 }
 
 $(document).ready(function () {
+  getNotifications();
+
   if (!isUserLoggedIn()) {
     showSection('login');
     $(document).on('submit', '#loginForm', function () {
@@ -1466,6 +1424,7 @@ $(document).ready(function () {
     $('#loader').fadeOut();
     return;
   } else {
+
     showSection('scanner');
     $(document).on('submit', '#loginForm', function () {
       $('#loader').fadeIn()
@@ -1475,15 +1434,12 @@ $(document).ready(function () {
     $(document).on('click', '.alert .dismissAlert', function () {
       dismissAlert();
     });
-    eventsHandling()
+    eventsHandling();
   }
 
 });
 
 function eventsHandling() {
-  $('#loader').fadeIn();
-  getProducts();
-  $('#loader').fadeOut();
   $(document).on('click', '.categories ul li', function () {
     closeSearch('inventorySearchEntity')
 
@@ -1721,7 +1677,7 @@ function eventsHandling() {
   });
 
   $(document).on('click', '.sectionNotifications .sectionTitleActions .allRead', function () {
-    markNotificationsRead();
+    markAllAsRead();
   });
 
   $(document).on('click', '.sectionInventory .sort', function () {
@@ -2149,6 +2105,10 @@ function renderInventory(inventoryProducts) {
         `;
 
       $('#InventoryProducts').append(productDiv);
+    }
+
+    if (product.quantity <= 5) {
+      notify(product, "lowstock")
     }
   });
 }
@@ -2739,4 +2699,194 @@ function submitNewPassword(newpass) {
       makeAlert("Server error while updating password");
       $('#loader').fadeOut();
     });
+}
+
+function notify(prod, type) {
+  let existingNotification = notifications.find(n => n.relatedProduct == prod._id)
+
+  if (!existingNotification) {
+    const text = `${prod.name} needs to be restocked! Remaining quantity is ${prod.quantity}`;
+    const relatedProduct = prod._id;
+    const notificationType = type;
+    const createdBy = JSON.parse(localStorage.getItem('user')).userInfo.id;
+
+    const notification = {
+      text,
+      relatedProduct,
+      type: notificationType,
+      createdBy,
+    };
+
+    fetch(API_URL + '/add-notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(notification),
+    })
+      .then(res => res.json())
+      .then(data => {
+        // console.log("Notification added:", data);
+      })
+      .catch(err => {
+        console.error("Failed to add notification", err);
+      });
+  } else {
+    //update name and qty
+  }
+
+  getNotifications();
+}
+
+function showNotifications() {
+  $('#loader').fadeIn();
+
+  $('body').addClass('graybody');
+  $('.sectionNotifications').fadeIn();
+  $('.bottomNav').fadeIn();
+
+  getNotifications();
+
+
+
+  $('#loader').fadeOut();
+}
+
+async function getNotifications() {
+  try {
+    $('#loader').fadeIn();
+    const response = await fetch(API_URL + '/get-notifications?userId=' + JSON.parse(localStorage.getItem('user')).userInfo.id, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    notifications = await response.json();
+
+    if (notifications.length == 0) {
+      const container = document.getElementById('notifications-container');
+      container.innerHTML = '';
+      $('.sectionNotifications .noProducts').remove();
+      $('.sectionNotifications').append('<div class="noProducts"><i class="fa-solid fa-circle-exclamation"></i><span>No notifications</span></div>');
+      $('#notificationsCount').hide();
+    } else {
+      $('.sectionNotifications .noProducts').remove();
+
+      renderNotifications(notifications);
+      $('#notificationsCount').show();
+      let notread = notifications.filter(n => !n.read).length
+      if (notread == 0) {
+        $('#notificationsCount').hide()
+      } else {
+        $('#notificationsCount').show()
+        $('#notificationsCount').html(notread);
+      }
+
+    }
+  } catch (error) {
+    $('.sectionNotifications .noProducts').remove();
+    $('.sectionNotifications').append(`<div class="noProducts"><i class="fa-solid fa-circle-xmark"></i><span>${error.message}</span></div>`);
+  }
+}
+
+function markNotificationAsRead(id) {
+
+  fetch(API_URL + `/notificationsMarkAsRead/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      console.log("Marked as read:", data);
+      getNotifications();
+    })
+    .catch(err => {
+      console.error("Failed to mark as read:", err);
+    });
+}
+
+function markAllAsRead() {
+
+  fetch(API_URL + `/notificationsMarkAsRead/all/${JSON.parse(localStorage.getItem('user')).userInfo.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      console.log("Marked as read:", data);
+      getNotifications();
+    })
+    .catch(err => {
+      console.error("Failed to mark as read:", err);
+    });
+}
+
+function viewProductDetails(id) {
+  console.log(id)
+}
+
+function renderNotifications(notifications) {
+  const container = document.getElementById('notifications-container');
+  container.innerHTML = '';
+
+  notifications.forEach(notification => {
+    const notifEl = document.createElement('div');
+    notifEl.className = 'notification';
+    notifEl.innerHTML = `
+        
+        <p class="title">${notification.text}</p>
+        ${!notification.read ? `<div class="badge"></div>` : ``}
+
+        <div class="about">
+          <p class="date">${formatRelativeTime(notification.date)}</p>
+
+          <div class="actions">
+            <a href="javascript:viewProductDetails('${notification.relatedProduct}');">View</a>
+            ${!notification.read ? `<a href="javascript:markNotificationAsRead('${notification._id}');">Mark as read</a>` : ''}
+          </div>
+        </div>
+        
+        
+    `;
+    container.appendChild(notifEl);
+  });
+
+  $('#loader').fadeOut();
+}
+
+function formatRelativeTime(dateString) {
+  const [datePart, timePart] = dateString.split(' ');
+  const [day, month, year] = datePart.split('/');
+  const [hours, minutes, seconds] = timePart.split(':');
+
+  const inputDate = new Date(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+  const now = new Date();
+  const diffMs = now - inputDate;
+
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSeconds < 60) {
+    return "moments ago";
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+  } else if (diffDays < 7) {
+    const options = { weekday: 'long', day: '2-digit', month: 'short' };
+    return inputDate.toLocaleDateString(undefined, options);
+  } else {
+    return datePart; // "15/04/2025"
+  }
 }
