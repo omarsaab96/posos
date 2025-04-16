@@ -1302,7 +1302,6 @@ header {
 #orderDetails {
   display: none;
   color: #828282;
-  padding-top: 20px;
 }
 #productDetails .productDetailsImage,
 #orderDetails .productDetailsImage {
@@ -1318,6 +1317,29 @@ header {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+#productDetails .hotkeys,
+#orderDetails .hotkeys {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#productDetails .hotkeys .productDetailsActions button,
+#orderDetails .hotkeys .productDetailsActions button {
+  display: inline-block;
+  width: auto;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 14px;
+  margin-right: 10px;
+  background-color: #111111;
+  border-radius: 10px;
+  color: #828282;
+}
+#productDetails .hotkeys .productDetailsActions button:last-child,
+#orderDetails .hotkeys .productDetailsActions button:last-child {
+  margin-right: 0;
 }
 #productDetails .orderDetailsHead,
 #orderDetails .orderDetailsHead {
@@ -1338,25 +1360,46 @@ header {
   justify-content: space-between;
   margin-bottom: 40px;
   flex-wrap: wrap;
+  background-color: #111111;
+  padding: 5px;
+  border-radius: 15px;
 }
 #productDetails .orderDetailsInfo .orderName,
 #orderDetails .orderDetailsInfo .orderName {
   color: #28a745;
   font-size: 26px;
   font-weight: 700;
+  padding-left: 5px;
 }
 #productDetails .orderDetailsInfo .orderTotal,
 #orderDetails .orderDetailsInfo .orderTotal {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 10px;
-  background-color: #111111;
-  border-radius: 20px;
-  font-weight: 700;
+  padding: 6px 5px 5px 8px;
+  background-color: #222222;
+  border-radius: 20px 15px 15px 20px;
+  padding-left: 30px;
+  position: relative;
+}
+#productDetails .orderDetailsInfo .orderTotal::before,
+#orderDetails .orderDetailsInfo .orderTotal::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background-image: url(../images/dollaricon.png);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 #productDetails .orderDetailsInfo .orderDate,
 #orderDetails .orderDetailsInfo .orderDate {
+  padding: 0 5px;
   flex: 0 0 100%;
   width: 100%;
   font-size: 13px;
@@ -1364,6 +1407,13 @@ header {
   align-items: center;
   justify-content: space-between;
   margin-top: 5px;
+  opacity: 0.5;
+}
+#productDetails .orderDetailsInfo .orderId,
+#orderDetails .orderDetailsInfo .orderId {
+  flex: 0 0 100%;
+  padding: 0 5px;
+  font-size: 12px;
   opacity: 0.5;
 }
 #productDetails .orderDetailsBody,
@@ -1413,8 +1463,11 @@ header {
 }
 #productDetails .productMoreDetails,
 #orderDetails .productMoreDetails {
-  padding-top: 20px;
+  padding: 10px 5px 0;
   width: 100%;
+  font-size: 14px;
+  border-top: 1px solid #222222;
+  margin-top: 10px;
 }
 #productDetails .productMoreDetails div,
 #orderDetails .productMoreDetails div {
@@ -1427,8 +1480,6 @@ header {
 #orderDetails .productDetailsActions {
   display: flex;
   align-items: center;
-  width: 100%;
-  padding-top: 20px;
 }
 #productDetails .productDetailsActions .productDetailsDelete,
 #productDetails .productDetailsActions .editProductBtn,
@@ -1492,6 +1543,25 @@ header {
   font-size: 14px;
   line-height: 14px;
   display: none;
+}
+
+#orderDetails .orderDetailsHead .orderId {
+  display: none;
+}
+#orderDetails .orderDetailsInfo {
+  background-color: #222222;
+  padding: 0;
+}
+#orderDetails .orderDetailsInfo .orderTotal {
+  background-color: #111111;
+  border-radius: 20px;
+}
+#orderDetails .orderDetailsInfo .orderName {
+  padding: 0;
+}
+#orderDetails .orderDetailsInfo .orderDate {
+  padding: 0;
+  margin-bottom: 20px;
 }
 
 .popup {
@@ -1996,7 +2066,6 @@ header {
   border-radius: 15px;
   margin-bottom: 10px;
   padding: 10px;
-  padding-left: 30px;
   position: relative;
 }
 .notification .badge {
@@ -2014,16 +2083,26 @@ header {
   font-size: 14px;
   margin-bottom: 5px;
   color: #828282;
+  font-weight: 700;
+}
+.notification .title.shift {
+  padding-left: 20px;
+}
+.notification .title .date {
+  margin-left: 10px;
+  font-size: 12px;
+  color: #828282;
+  opacity: 0.6;
+}
+.notification .content {
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: #828282;
 }
 .notification .about {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-.notification .about .date {
-  font-size: 12px;
-  color: #828282;
-  opacity: 0.6;
 }
 .notification .about .actions {
   text-align: right;
@@ -2034,6 +2113,9 @@ header {
   text-decoration: none;
   margin-right: 20px;
   padding: 10px;
+}
+.notification .about .actions a:first-child {
+  padding-left: 0;
 }
 .notification .about .actions a:last-child {
   margin: 0;

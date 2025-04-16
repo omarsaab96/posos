@@ -18,6 +18,7 @@ const notificationSchema = new mongoose.Schema({
     text: { type: String, required: true },
     date: { type: String, default: formatDate() },
     relatedProduct: {type: String, required: true},
+    productBarcode: {type: String, required: true},
     type: {type: String, required: true},
     linked: { type: Boolean, default: true },
     createdBy: { type: String, required: true },

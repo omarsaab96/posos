@@ -788,23 +788,34 @@ function showSection(section) {
 function showProductDetails(barcode) {
   closeSearch('inventorySearchEntity')
 
-  $.ajax({
-    url: API_URL + '/find-product',
-    type: 'POST',
-    contentType: 'application/json',
-    data: JSON.stringify({ barcode: barcode }),
-    success: function (response) {
-      $('#productDetails').html('');
+  let response = inventoryProducts.find(p => p.barcode == barcode);
 
-      var productdetails = `
+  if (response) {
+    $('#productDetails').html('');
+
+    var productdetails = `
         <div class="productDetailsImage">
           <img src="${response.image || '/uploads/default.jpg'}" alt="">
         </div>
-        <div class="orderDetailsHead">
+
+        <div class="hotkeys">
+          <div class="productDetailsActions">
+            <button class="productDetailsDelete"><i class="fa-solid fa-trash-can"></i> Delete</button>
+            <div class="deleteProduct">
+                <span class="delete confirmProductDetailsDelete"><i class="fa-solid fa-check"></i></span>
+                <span class="delete cancelProductDetailsDelete"><i class="fa-solid fa-xmark"></i></span>
+            </div>
+            <button class="editProductBtn"><i class="fa-solid fa-edit"></i> Edit</button>
+            
+            <button href="javascript:;"><i class="fa-solid fa-warehouse"></i> Restock</button>
+          </div>
+        </div>
+
+        <!--<div class="orderDetailsHead">
           <div class="orderId">
             code-<span>${response.barcode}</span>
           </div>
-        </div>
+        </div>-->
 
         <div class="orderDetailsInfo">
           <div class="orderName">
@@ -815,24 +826,16 @@ function showProductDetails(barcode) {
             ${response.currency || 'USD'} ${response.price} 
           </div>
 
-          <div class="orderDate">
-            ${response.type}
+          <div class="orderId">
+            code-<span>${response.barcode}</span>
           </div>
 
           <div class="productMoreDetails">
-            <div>Available quantity <span>${response.quantity}</span></div><br>
-            <div>Sold quantity <span>${response.soldQuantity}</span></div><br>
-            <div>Variation <span>${response.variation}</span></div><br>
-            <div>Last restock <span>${response.lastRestock}</span></div>
-          </div>
-
-          <div class="productDetailsActions">
-            <button class="productDetailsDelete"><i class="fa-solid fa-trash-can"></i></button>
-            <div class="deleteProduct">
-                <span class="delete confirmProductDetailsDelete"><i class="fa-solid fa-check"></i></span>
-                <span class="delete cancelProductDetailsDelete"><i class="fa-solid fa-xmark"></i></span>
-            </div>
-            <button class="editProductBtn"><i class="fa-solid fa-edit"></i></button>
+            <div>Available quantity<span>${response.quantity}</span></div>
+            <div>Sold quantity<span>${response.soldQuantity}</span></div>
+            <div>Category<span>${response.type}</span></div>
+            <div>Variation<span>${response.variation}</span></div>
+            <div>Last restock<span>${response.lastRestock}</span></div>
           </div>
 
           <div id="deletedAlert">
@@ -841,20 +844,16 @@ function showProductDetails(barcode) {
         </div>
       `;
 
-      $('#productDetails').html(productdetails);
+    $('#productDetails').html(productdetails);
 
-      $('#productDetails').show();
-      $('#InventoryProducts').hide();
-      $('.sectionInventory > .sectionTitle .sectionTitleActions').hide();
-      $('.sectionInventory >.sectionTitle h2').addClass('inventoryBack').html('<i class="fa-solid fa-arrow-left"></i> Inventory');
-      $('.categories').hide();
-
-    },
-    error: function (error) {
-      console.error('Error fetching order details:', error);
-      makeAlert('Error fetching order details');
-    }
-  });
+    $('#productDetails').show();
+    $('#InventoryProducts').hide();
+    $('.sectionInventory > .sectionTitle .sectionTitleActions').hide();
+    $('.sectionInventory >.sectionTitle h2').addClass('inventoryBack').html('<i class="fa-solid fa-arrow-left"></i> Inventory');
+    $('.categories').hide();
+  } else {
+    makeAlert("Product not found");
+  }
 
   $('#loader').fadeOut();
 }
@@ -1641,7 +1640,7 @@ function eventsHandling() {
   });
 
   $(document).on('click', '.editProductBtn', function () {
-    var barcode = $('#productDetails .orderDetailsHead .orderId span').text();
+    var barcode = $('#productDetails .orderId span').text();
     openEditProduct(barcode)
   });
 
@@ -2070,7 +2069,7 @@ function renderOrders(orders) {
   });
 }
 
-function renderInventory(inventoryProducts) {
+async function  renderInventory(inventoryProducts) {
   $('#InventoryProducts').html('');
 
   inventoryProducts.forEach(product => {
@@ -2108,7 +2107,11 @@ function renderInventory(inventoryProducts) {
     }
 
     if (product.quantity <= 5) {
-      notify(product, "lowstock")
+      notify(product, "Low stock").then(() => {
+        console.log("Notification sent successfully");
+      }).catch(err => {
+        console.error("Failed to send notification:", err);
+      });
     }
   });
 }
@@ -2707,12 +2710,14 @@ function notify(prod, type) {
   if (!existingNotification) {
     const text = `${prod.name} needs to be restocked! Remaining quantity is ${prod.quantity}`;
     const relatedProduct = prod._id;
+    const productBarcode = prod.barcode;
     const notificationType = type;
     const createdBy = JSON.parse(localStorage.getItem('user')).userInfo.id;
 
     const notification = {
       text,
       relatedProduct,
+      productBarcode,
       type: notificationType,
       createdBy,
     };
@@ -2732,7 +2737,24 @@ function notify(prod, type) {
         console.error("Failed to add notification", err);
       });
   } else {
-    //update name and qty
+    const updatedText = `${prod.name} needs to be restocked! Remaining quantity is ${prod.quantity}`;
+    const noteID = existingNotification._id;
+
+    fetch(`${API_URL}/edit-notification/${noteID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: updatedText }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        // console.log("Notification updated:", data);
+      })
+      .catch(err => {
+        console.error("Failed to update notification", err);
+      });
+
   }
 
   getNotifications();
@@ -2804,7 +2826,7 @@ function markNotificationAsRead(id) {
   })
     .then(res => res.json())
     .then(data => {
-      console.log("Marked as read:", data);
+      // console.log("Marked as read:", data);
       getNotifications();
     })
     .catch(err => {
@@ -2830,8 +2852,89 @@ function markAllAsRead() {
     });
 }
 
-function viewProductDetails(id) {
-  console.log(id)
+function viewProductDetails(barcode, notificationid) {
+  markNotificationAsRead(notificationid)
+  hideOrders();
+  hideScanner();
+  hideNotifications();
+  hideProfile();
+  hideLogin();
+  $('body').addClass('graybody');
+  $('.sectionInventory').fadeIn();
+  $('#loader').fadeIn();
+  $('.bottomNav').fadeIn();
+  closeEditProduct();
+  closeProductDetails();
+
+  let response = inventoryProducts.find(p => p.barcode == barcode);
+
+  if (response) {
+    $('#productDetails').html('');
+
+    var productdetails = `
+        <div class="productDetailsImage">
+          <img src="${response.image || '/uploads/default.jpg'}" alt="">
+        </div>
+
+        <div class="hotkeys">
+          <div class="productDetailsActions">
+            <button class="productDetailsDelete"><i class="fa-solid fa-trash-can"></i> Delete</button>
+            <div class="deleteProduct">
+                <span class="delete confirmProductDetailsDelete"><i class="fa-solid fa-check"></i></span>
+                <span class="delete cancelProductDetailsDelete"><i class="fa-solid fa-xmark"></i></span>
+            </div>
+            <button class="editProductBtn"><i class="fa-solid fa-edit"></i> Edit</button>
+            
+            <button href="javascript:;"><i class="fa-solid fa-warehouse"></i> Restock</button>
+          </div>
+        </div>
+
+        <!--<div class="orderDetailsHead">
+          <div class="orderId">
+            code-<span>${response.barcode}</span>
+          </div>
+        </div>-->
+
+        <div class="orderDetailsInfo">
+          <div class="orderName">
+            ${response.name}
+          </div>
+
+          <div class="orderTotal">
+            ${response.currency || 'USD'} ${response.price} 
+          </div>
+
+          <div class="orderId">
+            code-<span>${response.barcode}</span>
+          </div>
+
+          <div class="productMoreDetails">
+            <div>Available quantity<span>${response.quantity}</span></div>
+            <div>Sold quantity<span>${response.soldQuantity}</span></div>
+            <div>Category<span>${response.type}</span></div>
+            <div>Variation<span>${response.variation}</span></div>
+            <div>Last restock<span>${response.lastRestock}</span></div>
+          </div>
+
+          <div id="deletedAlert">
+            <i class="fa-regular fa-circle-check"></i> Product deleted successfully 
+          </div>
+        </div>
+      `;
+
+    $('#productDetails').html(productdetails);
+
+    $('#productDetails').show();
+    $('#InventoryProducts').hide();
+    $('.sectionInventory > .sectionTitle .sectionTitleActions').hide();
+    $('.sectionInventory >.sectionTitle h2').addClass('inventoryBack').html('<i class="fa-solid fa-arrow-left"></i> Inventory');
+    $('.categories').hide();
+
+    $('.bottomNav ul li').removeClass('active')
+    $('.bottomNav ul li[data-tag="inventory"]').addClass('active')
+  } else {
+    makeAlert("Product not found");
+  }
 }
 
 function renderNotifications(notifications) {
@@ -2839,18 +2942,19 @@ function renderNotifications(notifications) {
   container.innerHTML = '';
 
   notifications.forEach(notification => {
+
     const notifEl = document.createElement('div');
     notifEl.className = 'notification';
     notifEl.innerHTML = `
         
-        <p class="title">${notification.text}</p>
+        <p class="title  ${!notification.read ? `shift` : ``}">${notification.type}<span class="date">${formatRelativeTime(notification.date)}</span></p>
+        <p class="content">${notification.text}</p>
         ${!notification.read ? `<div class="badge"></div>` : ``}
 
         <div class="about">
-          <p class="date">${formatRelativeTime(notification.date)}</p>
 
           <div class="actions">
-            <a href="javascript:viewProductDetails('${notification.relatedProduct}');">View</a>
+            <a href="javascript:viewProductDetails('${notification.productBarcode}','${notification._id}');">View</a>
             ${!notification.read ? `<a href="javascript:markNotificationAsRead('${notification._id}');">Mark as read</a>` : ''}
           </div>
         </div>

@@ -550,14 +550,14 @@ app.post('/update-password', async (req, res) => {
 
 app.post('/add-notification', async (req, res) => {
     try {
-        const { text, relatedProduct, type, createdBy } = req.body;
+        const { text, relatedProduct, productBarcode, type, createdBy } = req.body;
 
-        if (!text || !relatedProduct || !type || !createdBy) {
+        if (!text || !relatedProduct || !productBarcode || !type || !createdBy) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
         const existing = await Notification.findOne({
-            relatedProduct: relatedProduct.trim(),
+            relatedProduct: relatedProduct.trim().toLowerCase(),
             read: false
         });
 
@@ -567,7 +567,8 @@ app.post('/add-notification', async (req, res) => {
 
         const newNotification = new Notification({
             text,
-            relatedProduct,
+            relatedProduct: relatedProduct.trim().toLowerCase(),
+            productBarcode,
             type,
             createdBy
         });
@@ -622,6 +623,43 @@ app.put('/edit-product', upload.single("image"), async (req, res) => {
         res.status(500).json({ message: "Error updating product", error: error.message });
     }
 });
+
+app.put('/edit-notification/:id', async (req, res) => {
+    try {
+        const notificationId = req.params.id;
+        const {
+            text,
+            relatedProduct,
+            productBarcode,
+            type,
+            read
+        } = req.body;
+
+        const updateFields = {};
+
+        if (text !== undefined) updateFields.text = text;
+        if (relatedProduct !== undefined) updateFields.relatedProduct = relatedProduct.trim().toLowerCase();
+        if (productBarcode !== undefined) updateFields.productBarcode = productBarcode;
+        if (type !== undefined) updateFields.type = type;
+        if (read !== undefined) updateFields.read = read;
+
+        const updated = await Notification.findByIdAndUpdate(
+            notificationId,
+            { $set: updateFields },
+            { new: true }
+        );
+
+        if (!updated) {
+            return res.status(404).json({ error: 'Notification not found' });
+        }
+
+        res.json(updated);
+    } catch (err) {
+        console.error("Error editing notification:", err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 app.put('/notificationsMarkAsRead/:id', async (req, res) => {
     try {
