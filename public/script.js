@@ -876,6 +876,7 @@ function showOrderDetails(oid) {
         // productDiv.setAttribute('data-pid', product.barcode);
 
         productDiv.innerHTML = `
+          <div>
             <div class="left">
                 <img id="productImage" src="${item.image || '/uploads/default.jpg'}" alt="">
             </div>
@@ -885,10 +886,15 @@ function showOrderDetails(oid) {
                         <p class="prodname"><span id="productName">${item.name}</span></p>
                     </div>
                     <div class="row">
-                      <p class="qtyXprice"><span id="productQuantity">${item.selectedQty || 0}</span> x <span id="productPrice">${item.price}</span> = <span id="totalproductPrice">${item.totalPrice}</span> <span id="currency">${item.currency}</span></p>
+                      <p class="qtyXprice"><span id="productQuantity">${item.selectedQty || 0}</span> x <span id="productPrice">${item.price} ${item.currency}</span></p>
                     </div>
                 </div>
             </div>
+          </div>
+
+          <div class="total">
+            <span id="currency">${item.currency}</span>&nbsp;<span id="totalproductPrice">${item.totalPrice}</span>
+          </div>
         `;
 
         items += productDiv.outerHTML;
@@ -1153,7 +1159,6 @@ function showLogin() {
 
 async function getProducts() {
   try {
-    $('#loader').fadeIn();
     const response = await fetch(API_URL + '/get-products?userId=' + JSON.parse(localStorage.getItem('user')).userInfo.id, {
       method: 'GET',
       headers: {
@@ -1206,10 +1211,6 @@ async function getProducts() {
 
       scannedProducts = scannedProducts.filter(product => !toRemove.includes(product._id));
     }
-
-
-    $('#loader').fadeOut();
-
 
   } catch (error) {
     $('#InventoryProducts').html(`<div class="noProducts"><i class="fa-solid fa-circle-xmark"></i><span>${error.message}</span></div>`);
@@ -1353,9 +1354,10 @@ function confirmEditProduct() {
         return response.json(); // Convert response to JSON
       }
     })
-    .then(updatedProduct => {
+    .then(async updatedProduct => {
       closeEditProduct();
-      getProducts();
+      await getProducts();
+      console.log(inventoryProducts)
       showProductDetails(updatedProduct.barcode)
     })
     .catch(error => {
@@ -2056,7 +2058,7 @@ function renderOrders(orders) {
                 </div>
                 <div class="actions">
                   
-
+                  <p class="orderTotal">${order.currency||"USD"} ${order.total}</p>
                   <button class="details"><i class="fa-solid fa-arrow-right"></i></button>
                 </div>
               </div>
@@ -2069,7 +2071,7 @@ function renderOrders(orders) {
   });
 }
 
-async function  renderInventory(inventoryProducts) {
+async function renderInventory(inventoryProducts) {
   $('#InventoryProducts').html('');
 
   inventoryProducts.forEach(product => {
@@ -2107,11 +2109,18 @@ async function  renderInventory(inventoryProducts) {
     }
 
     if (product.quantity <= 5) {
+      console.log("will notify")
       notify(product, "Low stock").then(() => {
         console.log("Notification sent successfully");
       }).catch(err => {
         console.error("Failed to send notification:", err);
       });
+    } else {
+      foundNotification = notifications.find(n => n.relatedProduct == product._id);
+
+      if (foundNotification) {
+        deleteNotification(foundNotification._id)
+      }
     }
   });
 }
@@ -2704,60 +2713,90 @@ function submitNewPassword(newpass) {
     });
 }
 
-function notify(prod, type) {
-  let existingNotification = notifications.find(n => n.relatedProduct == prod._id)
+const processingNotifications = new Set();
 
-  if (!existingNotification) {
-    const text = `${prod.name} needs to be restocked! Remaining quantity is ${prod.quantity}`;
-    const relatedProduct = prod._id;
-    const productBarcode = prod.barcode;
-    const notificationType = type;
-    const createdBy = JSON.parse(localStorage.getItem('user')).userInfo.id;
-
-    const notification = {
-      text,
-      relatedProduct,
-      productBarcode,
-      type: notificationType,
-      createdBy,
-    };
-
-    fetch(API_URL + '/add-notification', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(notification),
-    })
-      .then(res => res.json())
-      .then(data => {
-        // console.log("Notification added:", data);
-      })
-      .catch(err => {
-        console.error("Failed to add notification", err);
-      });
-  } else {
-    const updatedText = `${prod.name} needs to be restocked! Remaining quantity is ${prod.quantity}`;
-    const noteID = existingNotification._id;
-
-    fetch(`${API_URL}/edit-notification/${noteID}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text: updatedText }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        // console.log("Notification updated:", data);
-      })
-      .catch(err => {
-        console.error("Failed to update notification", err);
-      });
-
+async function notify(prod, type) {
+  // Prevent duplicate processing for the same product
+  if (processingNotifications.has(prod._id)) {
+    return;
   }
+  processingNotifications.add(prod._id);
 
-  getNotifications();
+  try {
+    const existingNotification = notifications.find(n => n.relatedProduct == prod._id);
+
+    if (!existingNotification) {
+      const text = `${prod.name} needs to be restocked! Remaining quantity is ${prod.quantity}`;
+      const relatedProduct = prod._id;
+      const productBarcode = prod.barcode;
+      const notificationType = type;
+      const createdBy = JSON.parse(localStorage.getItem('user')).userInfo.id;
+
+      const notification = {
+        text,
+        relatedProduct,
+        productBarcode,
+        type: notificationType,
+        createdBy,
+      };
+
+      const res = await fetch(API_URL + '/add-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notification),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to add notification: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      getNotifications(); // Refresh notifications
+    } else {
+      const updatedText = `${prod.name} needs to be restocked! Remaining quantity is ${prod.quantity}`;
+      const notificationId = existingNotification._id;
+
+      const res = await fetch(`${API_URL}/edit-notification/${notificationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: updatedText, linked: true }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to update notification: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      getNotifications(); // Refresh notifications
+    }
+  } catch (err) {
+    console.error("Error in notify():", err);
+  } finally {
+    // Remove product from processing set
+    processingNotifications.delete(prod._id);
+  }
+}
+
+function deleteNotification(id) {
+  fetch(`${API_URL}/edit-notification/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ linked: false }),
+  })
+    .then(res => res.json())
+    .then(data => {
+      // console.log("Notification updated:", data);
+      getNotifications();
+    })
+    .catch(err => {
+      console.error("Failed to update notification", err);
+    });
 }
 
 function showNotifications() {
@@ -2776,7 +2815,6 @@ function showNotifications() {
 
 async function getNotifications() {
   try {
-    $('#loader').fadeIn();
     const response = await fetch(API_URL + '/get-notifications?userId=' + JSON.parse(localStorage.getItem('user')).userInfo.id, {
       method: 'GET',
       headers: {
@@ -2790,26 +2828,22 @@ async function getNotifications() {
 
     notifications = await response.json();
 
-    if (notifications.length == 0) {
-      const container = document.getElementById('notifications-container');
-      container.innerHTML = '';
-      $('.sectionNotifications .noProducts').remove();
-      $('.sectionNotifications').append('<div class="noProducts"><i class="fa-solid fa-circle-exclamation"></i><span>No notifications</span></div>');
-      $('#notificationsCount').hide();
+
+
+    renderNotifications(notifications);
+    $('#notificationsCount').show();
+    let notread = notifications.filter(n => !n.read).length
+    if (notread == 0) {
+      $('#notificationsCount').hide()
     } else {
-      $('.sectionNotifications .noProducts').remove();
-
-      renderNotifications(notifications);
-      $('#notificationsCount').show();
-      let notread = notifications.filter(n => !n.read).length
-      if (notread == 0) {
-        $('#notificationsCount').hide()
-      } else {
-        $('#notificationsCount').show()
-        $('#notificationsCount').html(notread);
-      }
-
+      $('#notificationsCount').show()
+      $('#notificationsCount').html(notread);
     }
+
+
+
+    console.log('Notifications ', notifications)
+
   } catch (error) {
     $('.sectionNotifications .noProducts').remove();
     $('.sectionNotifications').append(`<div class="noProducts"><i class="fa-solid fa-circle-xmark"></i><span>${error.message}</span></div>`);
@@ -2941,11 +2975,22 @@ function renderNotifications(notifications) {
   const container = document.getElementById('notifications-container');
   container.innerHTML = '';
 
-  notifications.forEach(notification => {
+  notifications = notifications.filter(n => n.linked == true)
 
-    const notifEl = document.createElement('div');
-    notifEl.className = 'notification';
-    notifEl.innerHTML = `
+  if (notifications.length == 0) {
+    const container = document.getElementById('notifications-container');
+    container.innerHTML = '';
+    $('.sectionNotifications .noProducts').remove();
+    $('.sectionNotifications').append('<div class="noProducts"><i class="fa-solid fa-circle-exclamation"></i><span>No notifications</span></div>');
+    $('#notificationsCount').hide();
+  } else {
+    $('.sectionNotifications .noProducts').remove();
+
+    notifications.forEach(notification => {
+
+      const notifEl = document.createElement('div');
+      notifEl.className = 'notification';
+      notifEl.innerHTML = `
         
         <p class="title  ${!notification.read ? `shift` : ``}">${notification.type}<span class="date">${formatRelativeTime(notification.date)}</span></p>
         <p class="content">${notification.text}</p>
@@ -2961,10 +3006,10 @@ function renderNotifications(notifications) {
         
         
     `;
-    container.appendChild(notifEl);
-  });
+      container.appendChild(notifEl);
+    });
+  }
 
-  $('#loader').fadeOut();
 }
 
 function formatRelativeTime(dateString) {

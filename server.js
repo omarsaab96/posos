@@ -67,7 +67,9 @@ app.get('/get-notifications', async (req, res) => {
     const { userId } = req.query;
 
     try {
-        const notifications = await Notification.find({ createdBy: userId });
+        const notifications = await Notification.find({
+            createdBy: userId
+          });
 
         res.status(200).json(notifications);
     } catch (error) {
@@ -557,8 +559,7 @@ app.post('/add-notification', async (req, res) => {
         }
 
         const existing = await Notification.findOne({
-            relatedProduct: relatedProduct.trim().toLowerCase(),
-            read: false
+            relatedProduct: relatedProduct.trim().toLowerCase()
         });
 
         if (existing) {
@@ -632,6 +633,7 @@ app.put('/edit-notification/:id', async (req, res) => {
             relatedProduct,
             productBarcode,
             type,
+            linked,
             read
         } = req.body;
 
@@ -641,6 +643,7 @@ app.put('/edit-notification/:id', async (req, res) => {
         if (relatedProduct !== undefined) updateFields.relatedProduct = relatedProduct.trim().toLowerCase();
         if (productBarcode !== undefined) updateFields.productBarcode = productBarcode;
         if (type !== undefined) updateFields.type = type;
+        if (linked !== undefined) updateFields.linked = linked;
         if (read !== undefined) updateFields.read = read;
 
         const updated = await Notification.findByIdAndUpdate(
