@@ -162,41 +162,49 @@ function checkScannedBarcode(barcode, withTypeBarcodeEffect = true) {
         addProductQuantity(barcode);
       }
     } else {
-      product.selectedQty = 1;
-      product.totalPrice = Number((product.price * product.selectedQty).toFixed(2));
 
-      var el = document.createElement('div');
-      el.classList.add('product');
-      el.setAttribute('data-pid', barcode);
-      var ProductToAdd = `
-        <div class="left">
-          <img id="productImage" src="${product.image || '/uploads/default.jpg'}" alt="">
-        </div>
-        <div class="right">
-          <div class="info">
-            <p class="prodname"><span id="productName">${product.name}</span></p>
-            <p><span id="productCurrency">${product.currency}</span> <span id="productPrice">${product.totalPrice}</span></p>
-            <!-- <p><strong>Barcode:</strong> <span id="productBarcode"></span></p> -->
+      //if scanned product's qty is 0 in inventory => don't add
+      if (product.quantity == 0) {
+        makeAlert(`${product.name} is out of stock. Quantity is ${product.quantity}`)
+      } else {
+        product.selectedQty = 1;
+        product.totalPrice = Number((product.price * product.selectedQty).toFixed(2));
+
+        var el = document.createElement('div');
+        el.classList.add('product');
+        el.setAttribute('data-pid', barcode);
+        var ProductToAdd = `
+          <div class="left">
+            <img id="productImage" src="${product.image || '/uploads/default.jpg'}" alt="">
           </div>
+          <div class="right">
+            <div class="info">
+              <p class="prodname"><span id="productName">${product.name}</span></p>
+              <p><span id="productCurrency">${product.currency}</span> <span id="productPrice">${product.totalPrice}</span></p>
+              <!-- <p><strong>Barcode:</strong> <span id="productBarcode"></span></p> -->
+            </div>
 
-          <div class="actions">
-            <span class="remove"><i class="fa-solid fa-trash-can"></i></span>
-            <div>
-              <span class="remove confirmRemove"><i class="fa-solid fa-check"></i></span>
-              <span class="remove cancelRemove"><i class="fa-solid fa-xmark"></i></span>
+            <div class="actions">
+              <span class="remove"><i class="fa-solid fa-trash-can"></i></span>
+              <div>
+                <span class="remove confirmRemove"><i class="fa-solid fa-check"></i></span>
+                <span class="remove cancelRemove"><i class="fa-solid fa-xmark"></i></span>
+              </div>
+              <div class="productQuantity">
+                <span class="less"><i class="fa-solid fa-minus"></i></span>
+                <input type="number" name="prodQty" id="" value="1" min="1" max="100" step="1">
+                <span class="more"><i class="fa-solid fa-plus"></i></span>
+              </div>
             </div>
-            <div class="productQuantity">
-              <span class="less"><i class="fa-solid fa-minus"></i></span>
-              <input type="number" name="prodQty" id="" value="1" min="1" max="100" step="1">
-              <span class="more"><i class="fa-solid fa-plus"></i></span>
-            </div>
+
           </div>
+        `;
+        el.innerHTML = ProductToAdd;
+        document.getElementById("scannedProducts").prepend(el);
+        scannedProducts.push(product);
+      }
 
-        </div>
-      `;
-      el.innerHTML = ProductToAdd;
-      document.getElementById("scannedProducts").prepend(el);
-      scannedProducts.push(product);
+
     }
 
     if (withTypeBarcodeEffect) {
@@ -208,17 +216,23 @@ function checkScannedBarcode(barcode, withTypeBarcodeEffect = true) {
     $('#loader').fadeOut();
     beepSound.play().catch(error => console.error("Error playing beep:", error));
 
-    // Hide error and show product info
-    document.getElementById("productInfo").style.display = "block";
-    if (scannedProducts.length == 1) {
-      getOrdersCount();
-    }
-    $('#inputLoader').fadeIn();
-    document.getElementById("addNewProduct").style.display = "none";
-    document.getElementById("scannerContainer").classList.add('shrink');
-    document.getElementById("barcodeForm").style.display = "block";
-    document.getElementById("barcodeForm").classList.add('moveup');
 
+
+    $('#inputLoader').fadeIn();
+
+    if (scannedProducts.length > 0) {
+      // Hide error and show product info
+      document.getElementById("productInfo").style.display = "block";
+      if (scannedProducts.length == 1) {
+        getOrdersCount();
+      }
+
+      document.getElementById("addNewProduct").style.display = "none";
+      document.getElementById("scannerContainer").classList.add('shrink');
+      document.getElementById("barcodeForm").style.display = "block";
+      document.getElementById("barcodeForm").classList.add('moveup');
+
+    }
 
     getProducts();
     resumeScanner();
@@ -807,7 +821,7 @@ function showProductDetails(barcode) {
             </div>
             <button class="editProductBtn"><i class="fa-solid fa-edit"></i> Edit</button>
             
-            <button href="javascript:;"><i class="fa-solid fa-warehouse"></i> Restock</button>
+            <button onclick='openRestock(${JSON.stringify(response)})'><i class="fa-solid fa-warehouse"></i> Restock</button>
           </div>
         </div>
 
@@ -1314,6 +1328,8 @@ function openEditProduct(barcode) {
 
 function closeEditProduct() {
   document.getElementById("editProductFormForm").reset();
+  document.getElementById("restockQtyForm").reset();
+  document.getElementById("restockProduct").style.display = "none";
   document.getElementById("editProductForm").style.display = "none";
   document.getElementById("productDetails").style.display = "block";
   $('.sectionInventory .sectionTitle').show();
@@ -1860,6 +1876,19 @@ function eventsHandling() {
     updatePassword()
   });
 
+  $(document).on('input', '#restockProductQuantity', function () {
+    $('#productRestockTotal').text("Total quantity = " + (parseInt($('#productRestockTotal').attr('data-initial')) + parseInt($('#restockProductQuantity').val())))
+  });
+
+  $(document).on('reset', '#restockQtyForm', function () {
+    closeEditProduct()
+  });
+
+  $(document).on('submit', '#restockQtyForm', function (event) {
+    event.preventDefault();
+    restock();
+  });
+
   document.getElementById('profileAvatarInputField').addEventListener('change', function () {
     const file = this.files[0];
     if (file) {
@@ -1900,7 +1929,7 @@ async function openCartDetails() {
   $('#loader').fadeIn();
 
   const orderData = {
-    name: "Cart #" + $('#cartName').val(), // You can customize this
+    name: "Cart #" + $('#cartName').val(),
     itemsCount: scannedProducts.length,
     total: scannedProducts.reduce((sum, product) => sum + product.totalPrice, 0),
     items: scannedProducts,
@@ -1915,6 +1944,37 @@ async function openCartDetails() {
   const userConfirmed = await closeCart(totalUSD, formattedTotalLBP);
 
   if (userConfirmed) {
+    scannedProducts.forEach(async scanned => {
+      let inventoryItem = inventoryProducts.find(item => item._id === scanned._id);
+
+      if (inventoryItem) {
+        const newQuantity = inventoryItem.quantity - scanned.selectedQty;
+
+        try {
+          const res = await fetch('/update-product-quantity', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              id: scanned._id,
+              soldQuantity: scanned.selectedQty
+            })
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            inventoryItem.quantity = newQuantity;
+          } else {
+            console.error(`Error updating product: ${data.message}`);
+          }
+        } catch (err) {
+          console.error('Error:', err);
+        }
+      }
+    });
+
     $.ajax({
       url: API_URL + '/add-order',  // API endpoint
       type: 'POST',
@@ -2058,7 +2118,7 @@ function renderOrders(orders) {
                 </div>
                 <div class="actions">
                   
-                  <p class="orderTotal">${order.currency||"USD"} ${order.total}</p>
+                  <p class="orderTotal">${order.currency || "USD"} ${order.total}</p>
                   <button class="details"><i class="fa-solid fa-arrow-right"></i></button>
                 </div>
               </div>
@@ -2109,9 +2169,9 @@ async function renderInventory(inventoryProducts) {
     }
 
     if (product.quantity <= 5) {
-      console.log("will notify")
+      // console.log("will notify")
       notify(product, "Low stock").then(() => {
-        console.log("Notification sent successfully");
+        // console.log("Notification sent successfully");
       }).catch(err => {
         console.error("Failed to send notification:", err);
       });
@@ -2842,7 +2902,7 @@ async function getNotifications() {
 
 
 
-    console.log('Notifications ', notifications)
+    // console.log('Notifications ', notifications)
 
   } catch (error) {
     $('.sectionNotifications .noProducts').remove();
@@ -2919,7 +2979,7 @@ function viewProductDetails(barcode, notificationid) {
             </div>
             <button class="editProductBtn"><i class="fa-solid fa-edit"></i> Edit</button>
             
-            <button href="javascript:;"><i class="fa-solid fa-warehouse"></i> Restock</button>
+            <button onclick='openRestock(${JSON.stringify(response)})'><i class="fa-solid fa-warehouse"></i> Restock</button>
           </div>
         </div>
 
@@ -3037,5 +3097,44 @@ function formatRelativeTime(dateString) {
     return inputDate.toLocaleDateString(undefined, options);
   } else {
     return datePart; // "15/04/2025"
+  }
+}
+
+function openRestock(product) {
+  $('#productDetails').hide();
+  $('.sectionInventory>.sectionTitle').hide();
+  $('#restockProduct').show();
+  $('#restockProductId').val(product._id)
+  $('#productRestockLabel').html(product.name + " restock quantity<span>This quantity will be added to the quantity currently available in stock</span>")
+  $('#productRestockTotal').html("Total quantity = " + product.quantity)
+  $('#productRestockTotal').attr('data-initial', product.quantity);
+  $('#restockProductQuantity').val(0);
+  console.log("product", product)
+}
+
+async function restock() {
+  let productId = $('#restockProductId').val();
+  let restockedQuantity =
+    parseInt($('#productRestockTotal').attr('data-initial')) +
+    parseInt($('#restockProductQuantity').val());
+
+  try {
+    const response = await $.ajax({
+      url: '/restock-product',
+      type: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        id: productId,
+        restockedQuantity: restockedQuantity
+      })
+    });
+
+    closeEditProduct();
+    await getProducts();
+    console.log(inventoryProducts);
+    showProductDetails(response.product.barcode);
+  } catch (xhr) {
+    console.error("Restock failed", xhr.responseJSON?.message || xhr.statusText);
+    makeAlert("Failed to restock product");
   }
 }

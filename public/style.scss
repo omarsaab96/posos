@@ -260,8 +260,6 @@ button {
             display: flex;
         }
     }
-
-
 }
 
 .product {
@@ -374,6 +372,7 @@ button {
     font-size: 16px;
 }
 
+#restockQtyForm,
 .loginForm,
 #editProductForm,
 #addNewProduct {
@@ -494,6 +493,21 @@ button {
             }
         }
     }
+
+    label,p{
+        color:#828282;
+        margin-bottom:5px;
+        display:block;
+        padding:0 5px;
+
+        span{
+            font-style: italic;
+            display:block;
+            font-size:12px;
+            padding:5px 0;
+            font-weight:400;
+        }
+    }
 }
 
 .loginForm {
@@ -543,6 +557,7 @@ button {
             background-color: #222222;
             text-align: center;
             line-height: 32px;
+            margin-bottom:0;
         }
 
         .clear {
@@ -2458,4 +2473,8 @@ header {
             min-height: 62px;
         }
     }
+}
+
+.restock{
+    display:none;
 }

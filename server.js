@@ -69,7 +69,7 @@ app.get('/get-notifications', async (req, res) => {
     try {
         const notifications = await Notification.find({
             createdBy: userId
-          });
+        });
 
         res.status(200).json(notifications);
     } catch (error) {
@@ -625,6 +625,75 @@ app.put('/edit-product', upload.single("image"), async (req, res) => {
     }
 });
 
+app.put('/update-product-quantity', async (req, res) => {
+    try {
+        const { id, soldQuantity } = req.body;
+
+        if (!id || !soldQuantity) {
+            return res.status(400).json({ message: "Product ID and sold quantity are required" });
+        }
+
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        const newQuantity = product.quantity - soldQuantity;
+        const newSold = product.soldQuantity + soldQuantity;
+
+        const updatedProduct = await Product.findByIdAndUpdate(
+            id,
+            {
+                quantity: newQuantity,
+                soldQuantity: newSold
+            },
+            { new: true }
+        );
+
+        res.status(200).json({ message: "Quantity updated successfully", product: updatedProduct });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating quantity", error: error.message });
+    }
+});
+
+app.put('/restock-product', async (req, res) => {
+    try {
+        const { id, restockedQuantity } = req.body;
+
+        if (!id || !restockedQuantity) {
+            return res.status(400).json({ message: "Product ID and restocked quantity are required" });
+        }
+
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        const now = new Date();
+
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const year = now.getFullYear();
+
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        const updatedProduct = await Product.findByIdAndUpdate(
+            id,
+            {
+                quantity: restockedQuantity,
+                lastRestock: `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
+            },
+            { new: true }
+        );
+
+        res.status(200).json({ message: "Quantity updated successfully", product: updatedProduct });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating quantity", error: error.message });
+    }
+});
+
 app.put('/edit-notification/:id', async (req, res) => {
     try {
         const notificationId = req.params.id;
@@ -662,7 +731,6 @@ app.put('/edit-notification/:id', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 
 app.put('/notificationsMarkAsRead/:id', async (req, res) => {
     try {

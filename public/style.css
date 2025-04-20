@@ -344,6 +344,7 @@ button.secondary {
   font-size: 16px;
 }
 
+#restockQtyForm input,
 .loginForm input,
 #editProductForm input,
 #addNewProduct input {
@@ -358,16 +359,19 @@ button.secondary {
   color: #828282;
   margin-bottom: 5px;
 }
+#restockQtyForm input:disabled,
 .loginForm input:disabled,
 #editProductForm input:disabled,
 #addNewProduct input:disabled {
   opacity: 0.5;
 }
+#restockQtyForm input:-internal-autofill-selected,
 .loginForm input:-internal-autofill-selected,
 #editProductForm input:-internal-autofill-selected,
 #addNewProduct input:-internal-autofill-selected {
   background-color: inherit !important;
 }
+#restockQtyForm select,
 .loginForm select,
 #editProductForm select,
 #addNewProduct select {
@@ -389,11 +393,14 @@ button.secondary {
   -moz-appearance: none;
   -webkit-appearance: none;
 }
+#restockQtyForm select::-ms-expand,
 .loginForm select::-ms-expand,
 #editProductForm select::-ms-expand,
 #addNewProduct select::-ms-expand {
   display: none;
 }
+#restockQtyForm #editProductImage,
+#restockQtyForm #newProductImage,
 .loginForm #editProductImage,
 .loginForm #newProductImage,
 #editProductForm #editProductImage,
@@ -402,6 +409,8 @@ button.secondary {
 #addNewProduct #newProductImage {
   padding: 5px;
 }
+#restockQtyForm #editProductImage::file-selector-button,
+#restockQtyForm #newProductImage::file-selector-button,
 .loginForm #editProductImage::file-selector-button,
 .loginForm #newProductImage::file-selector-button,
 #editProductForm #editProductImage::file-selector-button,
@@ -416,6 +425,7 @@ button.secondary {
   outline: none;
   color: #828282;
 }
+#restockQtyForm .row,
 .loginForm .row,
 #editProductForm .row,
 #addNewProduct .row {
@@ -423,6 +433,7 @@ button.secondary {
   gap: 5px;
   margin-bottom: 5px;
 }
+#restockQtyForm .row .price,
 .loginForm .row .price,
 #editProductForm .row .price,
 #addNewProduct .row .price {
@@ -430,6 +441,7 @@ button.secondary {
   gap: 5px;
   width: 60%;
 }
+#restockQtyForm .row .price input,
 .loginForm .row .price input,
 #editProductForm .row .price input,
 #addNewProduct .row .price input {
@@ -438,12 +450,14 @@ button.secondary {
   width: 60%;
   margin-bottom: 0;
 }
+#restockQtyForm .row .productQuantity,
 .loginForm .row .productQuantity,
 #editProductForm .row .productQuantity,
 #addNewProduct .row .productQuantity {
   width: 40%;
   justify-content: flex-end;
 }
+#restockQtyForm .row .productQuantity input,
 .loginForm .row .productQuantity input,
 #editProductForm .row .productQuantity input,
 #addNewProduct .row .productQuantity input {
@@ -454,6 +468,10 @@ button.secondary {
   padding-left: 0;
   padding-right: 0;
 }
+#restockQtyForm .productQuantity .editless,
+#restockQtyForm .productQuantity .editmore,
+#restockQtyForm .productQuantity .newless,
+#restockQtyForm .productQuantity .newmore,
 .loginForm .productQuantity .editless,
 .loginForm .productQuantity .editmore,
 .loginForm .productQuantity .newless,
@@ -468,22 +486,50 @@ button.secondary {
 #addNewProduct .productQuantity .newmore {
   background-color: #111111;
 }
+#restockQtyForm .actions,
 .loginForm .actions,
 #editProductForm .actions,
 #addNewProduct .actions {
   display: flex;
   gap: 5px;
 }
+#restockQtyForm .actions button,
 .loginForm .actions button,
 #editProductForm .actions button,
 #addNewProduct .actions button {
   padding: 10px;
   font-size: 14px;
 }
+#restockQtyForm .actions button[type=reset],
 .loginForm .actions button[type=reset],
 #editProductForm .actions button[type=reset],
 #addNewProduct .actions button[type=reset] {
   background-color: #111111;
+}
+#restockQtyForm label, #restockQtyForm p,
+.loginForm label,
+.loginForm p,
+#editProductForm label,
+#editProductForm p,
+#addNewProduct label,
+#addNewProduct p {
+  color: #828282;
+  margin-bottom: 5px;
+  display: block;
+  padding: 0 5px;
+}
+#restockQtyForm label span, #restockQtyForm p span,
+.loginForm label span,
+.loginForm p span,
+#editProductForm label span,
+#editProductForm p span,
+#addNewProduct label span,
+#addNewProduct p span {
+  font-style: italic;
+  display: block;
+  font-size: 12px;
+  padding: 5px 0;
+  font-weight: 400;
 }
 
 .loginForm {
@@ -531,6 +577,7 @@ button.secondary {
   background-color: #222222;
   text-align: center;
   line-height: 32px;
+  margin-bottom: 0;
 }
 #addNewProductForm .productImg .clear,
 #editProductForm .productImg .clear {
@@ -2243,6 +2290,10 @@ header {
 #detailsProdsList .product .right {
   flex: 0 0 calc(100% - 62px);
   min-height: 62px;
+}
+
+.restock {
+  display: none;
 }
 
 /*# sourceMappingURL=style.css.map */
