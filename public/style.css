@@ -1540,8 +1540,10 @@ header {
   display: flex;
   align-items: center;
 }
+#productDetails .productDetailsActions .productDetailsShare,
 #productDetails .productDetailsActions .productDetailsDelete,
 #productDetails .productDetailsActions .editProductBtn,
+#orderDetails .productDetailsActions .productDetailsShare,
 #orderDetails .productDetailsActions .productDetailsDelete,
 #orderDetails .productDetailsActions .editProductBtn {
   padding: 5px;

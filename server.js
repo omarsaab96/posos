@@ -9,6 +9,8 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { authenticateToken, isAdmin } = require('./middleware/auth');
+const PDFDocument = require('pdfkit');
+
 
 const User = require('./models/User');
 const Product = require('./models/Product');
@@ -76,6 +78,7 @@ app.get('/get-notifications', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 // POST
 app.post("/add-product", upload.single("image"), async (req, res) => {
@@ -583,6 +586,33 @@ app.post('/add-notification', async (req, res) => {
     }
 });
 
+// app.post('/pdf/:id', async (req, res) => {
+//   const orderId = req.params.id;
+
+//   const order = await getOrderFromDB(orderId); // You provide this
+//   if (!order) return res.status(404).json({ error: 'Order not found' });
+
+//   const fileName = `order-${orderId}.pdf`;
+//   const filePath = path.join(__dirname, 'public', 'pdfs', fileName);
+
+//   const doc = new PDFDocument();
+//   doc.pipe(fs.createWriteStream(filePath));
+//   doc.text(`Order ID: ${order.id}`);
+//   doc.text(`Customer: ${order.customerName}`);
+//   doc.text(`Date: ${order.date}`);
+//   doc.text(`Items:`);
+//   order.items.forEach(item => {
+//     doc.text(`- ${item.name} x ${item.quantity} @ ${item.price}`);
+//   });
+//   doc.text(`Total: ${order.total} ${order.currency}`);
+//   doc.end();
+
+//   // Wait until file is created (if needed you can watch fs or use event)
+//   doc.on('finish', () => {
+//     const publicUrl = `https://yourdomain.com/pdfs/${fileName}`;
+//     res.json({ pdfUrl: publicUrl });
+//   });
+// });
 
 //PUT
 app.put('/edit-product', upload.single("image"), async (req, res) => {

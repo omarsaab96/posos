@@ -1,5 +1,5 @@
-const API_URL = "http://localhost:5000"
-// const API_URL = "https://posos.onrender.com"
+// const API_URL = "http://localhost:5000"
+const API_URL = "https://posos.onrender.com"
 const USDLBP_RATE = 90000;
 
 // var singleMode = true;
@@ -71,7 +71,7 @@ const config = {
 };
 
 // Check Camera Permissions
-async function checkCameraPermissions() {
+async function checkCameraPermissionsBAK() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     stream.getTracks().forEach(track => track.stop()); // Stop stream after checking
@@ -86,6 +86,57 @@ async function checkCameraPermissions() {
     // document.getElementById("scannerSettings").style.display="none";
   }
 }
+
+
+async function checkCameraPermissions() {
+  const openScannerBtn = document.getElementById("openScanner");
+  const permissionDeniedMsg = document.getElementById("permissionDenied");
+
+  const isNative = window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
+
+  if (isNative) {
+    try {
+      const { Camera } = Capacitor.Plugins;
+
+      // Check current permission state
+      const status = await Camera.checkPermissions();
+
+      if (status.camera !== 'granted') {
+        const result = await Camera.requestPermissions({ permissions: ['camera'] });
+
+        if (result.camera !== 'granted') {
+          throw new Error("Camera permission denied.");
+        }
+      }
+
+      openScannerBtn.style.display = "block";
+      permissionDeniedMsg.style.display = "none";
+      // startScanner(); // Uncomment if needed
+
+    } catch (error) {
+      console.warn("Camera permission error (mobile):", error);
+      openScannerBtn.style.display = "none";
+      permissionDeniedMsg.style.display = "block";
+    }
+
+  } else {
+    // Web fallback
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop());
+
+      openScannerBtn.style.display = "block";
+      permissionDeniedMsg.style.display = "none";
+      // startScanner(); // Uncomment if needed
+
+    } catch (error) {
+      console.warn("Camera permission error (web):", error);
+      openScannerBtn.style.display = "none";
+      permissionDeniedMsg.style.display = "block";
+    }
+  }
+}
+
 
 const html5QrCode = new Html5Qrcode("reader");
 let selectedCameraId = null;
@@ -654,6 +705,42 @@ function deleteOrderDetails(oid) {
   $('#orderDetails .productDetailsActions').addClass('removing');
 }
 
+async function shareOrder(oid) {
+  // try {
+  //   const response = await fetch(`${API_URL}/pdf/${oid}`);
+  //   const blob = await response.blob();
+
+  //   const reader = new FileReader();
+  //   reader.onloadend = async () => {
+  //     const base64 = reader.result.split(',')[1];
+  //     const fileName = `order-${oid}.pdf`;
+
+  //     const writeResult = await Capacitor.Plugins.Filesystem.writeFile({
+  //       path: fileName,
+  //       data: base64,
+  //       directory: 'DOCUMENTS'
+  //     });
+
+  //     const fileUri = await Capacitor.Plugins.Filesystem.getUri({
+  //       path: fileName,
+  //       directory: 'DOCUMENTS'
+  //     });
+
+  //     await Capacitor.Plugins.Share.share({
+  //       title: `Order #${oid}`,
+  //       text: 'Order details attached as PDF.',
+  //       url: fileUri.uri,
+  //       dialogTitle: 'Share Order'
+  //     });
+  //   };
+  //   reader.readAsDataURL(blob);
+  // } catch (err) {
+  //   console.error('Failed to share PDF:', err);
+  // }
+}
+
+
+
 function cancelDeleteOrder(oid) {
   let el = $("#Orders .product[data-oid='" + oid + "']");
   $(el).find('.actions').removeClass('removing');
@@ -874,6 +961,7 @@ function showProductDetails(barcode) {
 
 function showOrderDetails(oid) {
   closeSearch('ordersSearchEntity')
+  $('#loader').fadeIn();
   $.ajax({
     url: API_URL + '/find-order',
     type: 'POST',
@@ -914,7 +1002,6 @@ function showOrderDetails(oid) {
         items += productDiv.outerHTML;
       })
 
-
       var orderdetails = `
         <div class="orderDetailsHead">
           <div class="orderId">
@@ -936,6 +1023,7 @@ function showOrderDetails(oid) {
           </div>
 
           <div class="productDetailsActions">
+            <button class="productDetailsShare"><i class="fa-solid fa-share-nodes"></i></button>
             <button class="productDetailsDelete"><i class="fa-solid fa-trash-can"></i></button>
             <div class="deleteProduct">
               <span class="delete confirmProductDetailsDelete"><i class="fa-solid fa-check"></i></span>
@@ -965,14 +1053,13 @@ function showOrderDetails(oid) {
         
       `;
 
-
-
       $('#orderDetails').html(orderdetails);
 
       $('#orderDetails').show();
       $('#Orders').hide();
       $('.sectionOrders > .sectionTitle h2').addClass('ordersback').html('<i class="fa-solid fa-arrow-left"></i> Orders');
       $('.sectionOrders >.sectionTitle .sectionTitleActions').hide();
+      $('#loader').fadeOut();
     },
     error: function (error) {
       console.error('Error fetching order details:', error);
@@ -1567,6 +1654,11 @@ function eventsHandling() {
   $(document).on('click', '#orderDetails .productDetailsDelete', function () {
     oid = $('#orderDetails .orderId').text().split("-")[1].trim();
     deleteOrderDetails(oid)
+  });
+
+  $(document).on('click', '#orderDetails .productDetailsShare', function () {
+    oid = $('#orderDetails .orderId').text().split("-")[1].trim();
+    shareOrder(oid)
   });
 
   $(document).on('click', '#orderDetails .confirmProductDetailsDelete', function () {
